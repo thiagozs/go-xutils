@@ -5,6 +5,7 @@ import (
 	"github.com/thiagozs/go-xutils/bools"
 	"github.com/thiagozs/go-xutils/calc"
 	"github.com/thiagozs/go-xutils/cnpj"
+	"github.com/thiagozs/go-xutils/cpf"
 	"github.com/thiagozs/go-xutils/csv"
 	"github.com/thiagozs/go-xutils/email"
 	"github.com/thiagozs/go-xutils/md5"
@@ -25,6 +26,7 @@ type XUtils struct {
 	aes    *aes.AES
 	csv    *csv.CSV
 	bools  *bools.Bools
+	cpf    *cpf.CPF
 }
 
 func New() *XUtils {
@@ -40,6 +42,7 @@ func New() *XUtils {
 		aes:    aes.New(),
 		csv:    csv.New(),
 		bools:  bools.New(),
+		cpf:    cpf.New(),
 	}
 }
 
@@ -85,4 +88,8 @@ func (x *XUtils) CSV() *csv.CSV {
 
 func (x *XUtils) Bools() *bools.Bools {
 	return x.bools
+}
+
+func (x *XUtils) CPF() *cpf.CPF {
+	return x.cpf
 }
