@@ -107,7 +107,7 @@ func TestSliceToUpper(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := s.SliceToUpper(test.input)
+		result := s.ToUpper(test.input)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("expected %v, got %v", test.expected, result)
 		}
@@ -123,7 +123,7 @@ func TestSliceToTitle(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := s.SliceToTitle(test.input)
+		result := s.ToTitle(test.input)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("expected %v, got %v", test.expected, result)
 		}
@@ -140,7 +140,7 @@ func TestSliceToCamel(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := s.SliceToCamel(test.input)
+		result := s.ToCamel(test.input)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("expected %v, got %v", test.expected, result)
 		}
@@ -157,7 +157,7 @@ func TestSliceToSnake(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := s.SliceToSnake(test.input)
+		result := s.ToSnake(test.input)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("expected %v, got %v", test.expected, result)
 		}

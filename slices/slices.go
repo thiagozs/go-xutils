@@ -96,7 +96,7 @@ func (s *Slices) SliceToLower(strs []string) []string {
 }
 
 // SliceToUpper converts all strings in a slice to upper case
-func (s *Slices) SliceToUpper(strs []string) []string {
+func (s *Slices) ToUpper(strs []string) []string {
 	for i, v := range strs {
 		strs[i] = strings.ToUpper(v)
 	}
@@ -104,7 +104,7 @@ func (s *Slices) SliceToUpper(strs []string) []string {
 }
 
 // SliceToTitle converts all strings in a slice to title case
-func (s *Slices) SliceToTitle(strs []string) []string {
+func (s *Slices) ToTitle(strs []string) []string {
 	for i, v := range strs {
 		strs[i] = cases.Title(language.BrazilianPortuguese).String(v)
 	}
@@ -112,7 +112,7 @@ func (s *Slices) SliceToTitle(strs []string) []string {
 }
 
 // SliceToCamel converts all strings in a slice to camel case
-func (s *Slices) SliceToCamel(strs []string) []string {
+func (s *Slices) ToCamel(strs []string) []string {
 	results := []string{}
 	for _, v := range strs {
 		results = append(results, s.ToCamelCase(v))
@@ -121,7 +121,7 @@ func (s *Slices) SliceToCamel(strs []string) []string {
 }
 
 // SliceToSnake converts all strings in a slice to snake case
-func (s *Slices) SliceToSnake(strs []string) []string {
+func (s *Slices) ToSnake(strs []string) []string {
 	for i, v := range strs {
 		strs[i] = s.ToSnakeCase(v)
 	}
