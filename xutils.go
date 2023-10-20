@@ -2,8 +2,10 @@ package xutils
 
 import (
 	"github.com/thiagozs/go-xutils/aes"
+	"github.com/thiagozs/go-xutils/bools"
 	"github.com/thiagozs/go-xutils/calc"
 	"github.com/thiagozs/go-xutils/cnpj"
+	"github.com/thiagozs/go-xutils/csv"
 	"github.com/thiagozs/go-xutils/email"
 	"github.com/thiagozs/go-xutils/md5"
 	"github.com/thiagozs/go-xutils/rsa"
@@ -21,6 +23,8 @@ type XUtils struct {
 	rsa    *rsa.RSA
 	rsaPem *rsa.RSAPem
 	aes    *aes.AES
+	csv    *csv.CSV
+	bools  *bools.Bools
 }
 
 func New() *XUtils {
@@ -34,6 +38,8 @@ func New() *XUtils {
 		rsa:    rsa.New(),
 		rsaPem: rsa.NewPem(),
 		aes:    aes.New(),
+		csv:    csv.New(),
+		bools:  bools.New(),
 	}
 }
 
@@ -71,4 +77,12 @@ func (x *XUtils) RSAPem() *rsa.RSAPem {
 
 func (x *XUtils) AES() *aes.AES {
 	return x.aes
+}
+
+func (x *XUtils) CSV() *csv.CSV {
+	return x.csv
+}
+
+func (x *XUtils) Bools() *bools.Bools {
+	return x.bools
 }
