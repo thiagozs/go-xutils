@@ -1,0 +1,74 @@
+package xutils
+
+import (
+	"github.com/thiagozs/go-xutils/aes"
+	"github.com/thiagozs/go-xutils/calc"
+	"github.com/thiagozs/go-xutils/cnpj"
+	"github.com/thiagozs/go-xutils/email"
+	"github.com/thiagozs/go-xutils/md5"
+	"github.com/thiagozs/go-xutils/rsa"
+	"github.com/thiagozs/go-xutils/slices"
+	"github.com/thiagozs/go-xutils/strings"
+)
+
+type XUtils struct {
+	calc   *calc.Calc
+	cnpj   *cnpj.CNPJ
+	email  *email.Email
+	slices *slices.Slices
+	str    *strings.Strings
+	md5    *md5.Md5
+	rsa    *rsa.RSA
+	rsaPem *rsa.RSAPem
+	aes    *aes.AES
+}
+
+func New() *XUtils {
+	return &XUtils{
+		slices: slices.New(strings.New()),
+		str:    strings.New(),
+		calc:   calc.New(),
+		cnpj:   cnpj.New(),
+		email:  email.New(),
+		md5:    md5.New(),
+		rsa:    rsa.New(),
+		rsaPem: rsa.NewPem(),
+		aes:    aes.New(),
+	}
+}
+
+func (x *XUtils) Strings() *strings.Strings {
+	return x.str
+}
+
+func (x *XUtils) Slices() *slices.Slices {
+	return x.slices
+}
+
+func (x *XUtils) Calc() *calc.Calc {
+	return x.calc
+}
+
+func (x *XUtils) CNPJ() *cnpj.CNPJ {
+	return x.cnpj
+}
+
+func (x *XUtils) Email() *email.Email {
+	return x.email
+}
+
+func (x *XUtils) MD5() *md5.Md5 {
+	return x.md5
+}
+
+func (x *XUtils) RSA() *rsa.RSA {
+	return x.rsa
+}
+
+func (x *XUtils) RSAPem() *rsa.RSAPem {
+	return x.rsaPem
+}
+
+func (x *XUtils) AES() *aes.AES {
+	return x.aes
+}
