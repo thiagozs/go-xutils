@@ -1,6 +1,6 @@
 # XUtils - a golang tools for development
 
-## MD5 
+## MD5
 
 The md5 package contains utilities for hashing strings using the MD5 algorithm. It provides a straightforward way to generate MD5 hashes from input strings, ensuring data integrity and security.
 

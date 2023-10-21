@@ -1,6 +1,6 @@
 module github.com/thiagozs/go-xutils
 
-go 1.21.0
+go 1.21
 
 require (
 	github.com/google/uuid v1.3.1
