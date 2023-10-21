@@ -10,12 +10,12 @@ import (
 )
 
 type Slices struct {
-	*xstr.Strings
+	str *xstr.Strings
 }
 
 func New(strs *xstr.Strings) *Slices {
 	return &Slices{
-		Strings: strs,
+		str: strs,
 	}
 }
 
@@ -88,7 +88,7 @@ func (s *Slices) RemoveEDTS(strs []string) []string {
 }
 
 // SliceToLower converts all strings in a slice to lower case
-func (s *Slices) SliceToLower(strs []string) []string {
+func (s *Slices) ToLower(strs []string) []string {
 	for i, v := range strs {
 		strs[i] = strings.ToLower(v)
 	}
@@ -115,7 +115,7 @@ func (s *Slices) ToTitle(strs []string) []string {
 func (s *Slices) ToCamel(strs []string) []string {
 	results := []string{}
 	for _, v := range strs {
-		results = append(results, s.ToCamelCase(v))
+		results = append(results, s.str.ToCamelCase(v))
 	}
 	return results
 }
@@ -123,14 +123,14 @@ func (s *Slices) ToCamel(strs []string) []string {
 // SliceToSnake converts all strings in a slice to snake case
 func (s *Slices) ToSnake(strs []string) []string {
 	for i, v := range strs {
-		strs[i] = s.ToSnakeCase(v)
+		strs[i] = s.str.ToSnakeCase(v)
 	}
 	return strs
 }
 
-func (s *Slices) RemoveStopWordsFromSlice(strs []string) []string {
+func (s *Slices) RemoveStopWords(strs []string) []string {
 	for i, v := range strs {
-		strs[i] = s.RemoveStopWords(v)
+		strs[i] = s.str.RemoveStopWords(v)
 	}
 	return strs
 }

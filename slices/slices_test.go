@@ -90,7 +90,7 @@ func TestSliceToLower(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := s.SliceToLower(test.input)
+		result := s.ToLower(test.input)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("expected %v, got %v", test.expected, result)
 		}
@@ -173,7 +173,7 @@ func TestRemoveStopWordsFromSlice(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := s.RemoveStopWordsFromSlice(test.input)
+		result := s.RemoveStopWords(test.input)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("expected %v, got %v", test.expected, result)
 		}
