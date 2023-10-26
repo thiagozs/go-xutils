@@ -12,19 +12,27 @@ var (
 )
 
 func TestAreKeysValid(t *testing.T) {
+	// Inicialize a instância de Slices aqui
+	// Substitua nil pelo valor apropriado se necessário
+	s := New(nil)
+
 	tests := []struct {
 		requiredKeys []string
 		incomingKeys []string
 		expected     bool
 	}{
-		{[]string{"key1", "key2", "key3"}, []string{"key1", "key2"}, false},
-		{[]string{"key1", "key2"}, []string{"key1", "key2", "key3"}, true},
+		{[]string{"key1", "key2", "key3"}, []string{"key1", "key4"}, false},
+		{[]string{"key1", "key2", "key3"}, []string{"key1", "key2"}, true},
+		{[]string{"key1", "key2", "key3"}, []string{"key1", "key2", "key3"}, true},
+		{[]string{"key1", "key2", "key3"}, []string{"key1", "key2", "key4"}, false},
+		{[]string{"key1", "key2", "key3"}, []string{"key3", "key4"}, false},
+		{[]string{"key1", "key2", "key3"}, []string{"key3"}, true},
 	}
 
 	for _, test := range tests {
 		result := s.AreKeysValid(test.requiredKeys, test.incomingKeys)
 		if result != test.expected {
-			t.Errorf("expected %v, got %v", test.expected, result)
+			t.Errorf("For requiredKeys: %v and incomingKeys: %v, expected %v, got %v", test.requiredKeys, test.incomingKeys, test.expected, result)
 		}
 	}
 }

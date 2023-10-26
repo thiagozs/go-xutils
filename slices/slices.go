@@ -22,18 +22,13 @@ func New(strs *xstr.Strings) *Slices {
 // AreKeysValid checks if all required keys are present in the incoming keys
 func (s *Slices) AreKeysValid(requiredKeys, incomingKeys []string) bool {
 	requiredKeysMap := make(map[string]bool)
-	incomingKeysMap := make(map[string]bool)
 
 	for _, key := range requiredKeys {
 		requiredKeysMap[key] = true
 	}
 
 	for _, key := range incomingKeys {
-		incomingKeysMap[key] = true
-	}
-
-	for key := range requiredKeysMap {
-		if _, exists := incomingKeysMap[key]; !exists {
+		if _, exists := requiredKeysMap[key]; !exists {
 			return false
 		}
 	}
