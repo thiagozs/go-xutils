@@ -110,3 +110,35 @@ func TestToQueryParamsWithJSONtags(t *testing.T) {
 		})
 	}
 }
+
+func TestToQueryParamsWithJSONtagsomitempty(t *testing.T) {
+	s := New()
+
+	tests := []struct {
+		name     string
+		input    any
+		expected string
+	}{
+		{
+			name: "Test with omitempty",
+			input: struct {
+				Name  string `json:"name,omitempty"`
+				Age   int    `json:"age,omitempty"`
+				Email string `json:"email,omitempty"`
+			}{
+				Name:  "John Doe",
+				Email: "john.doe@example.com",
+			},
+			expected: "email=john.doe%40example.com&name=John+Doe",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := s.ToQueryParams(tt.input)
+			if result != tt.expected {
+				t.Errorf("Expected %s, got %s", tt.expected, result)
+			}
+		})
+	}
+}

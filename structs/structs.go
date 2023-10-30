@@ -24,19 +24,21 @@ func (s *Structs) ToQueryParams(i any) string {
 	}
 
 	query := url.Values{}
-	t := v.Type()
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
-		fieldType := t.Field(i)
+		fieldType := v.Type().Field(i)
+		tag := fieldType.Tag.Get("json")
+		name := fieldType.Name
 
-		// Use JSON tag as field name if it exists, otherwise use struct field name
-		name := fieldType.Tag.Get("json")
-		if name == "" {
-			name = fieldType.Name
+		// Use JSON tag as field name if it's available
+		if tag != "" {
+			name = strings.Split(tag, ",")[0] // Ignore options like omitempty
 		}
 
-		// Convert field name to lower case to follow common query parameter naming conventions
-		name = strings.ToLower(name)
+		// Skip zero values for fields with omitempty
+		if strings.Contains(tag, "omitempty") && isEmptyValue(field) {
+			continue
+		}
 
 		switch field.Kind() {
 		case reflect.Slice:
@@ -44,10 +46,29 @@ func (s *Structs) ToQueryParams(i any) string {
 			for j := 0; j < field.Len(); j++ {
 				sliceValues = append(sliceValues, fmt.Sprintf("%v", field.Index(j)))
 			}
-			query.Add(name, strings.Join(sliceValues, ","))
+			query.Add(strings.ToLower(name), strings.Join(sliceValues, ","))
 		default:
-			query.Add(name, fmt.Sprintf("%v", field.Interface()))
+			query.Add(strings.ToLower(name), fmt.Sprintf("%v", field.Interface()))
 		}
 	}
 	return query.Encode()
+}
+
+// isEmptyValue checks if a reflect.Value is considered empty
+func isEmptyValue(v reflect.Value) bool {
+	switch v.Kind() {
+	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
+		return v.Len() == 0
+	case reflect.Bool:
+		return !v.Bool()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return v.Int() == 0
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return v.Uint() == 0
+	case reflect.Float32, reflect.Float64:
+		return v.Float() == 0
+	case reflect.Interface, reflect.Ptr:
+		return v.IsNil()
+	}
+	return false
 }
