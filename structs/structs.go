@@ -24,18 +24,29 @@ func (s *Structs) ToQueryParams(i any) string {
 	}
 
 	query := url.Values{}
+	t := v.Type()
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
-		name := v.Type().Field(i).Name
+		fieldType := t.Field(i)
+
+		// Use JSON tag as field name if it exists, otherwise use struct field name
+		name := fieldType.Tag.Get("json")
+		if name == "" {
+			name = fieldType.Name
+		}
+
+		// Convert field name to lower case to follow common query parameter naming conventions
+		name = strings.ToLower(name)
+
 		switch field.Kind() {
 		case reflect.Slice:
 			var sliceValues []string
 			for j := 0; j < field.Len(); j++ {
 				sliceValues = append(sliceValues, fmt.Sprintf("%v", field.Index(j)))
 			}
-			query.Add(strings.ToLower(name), strings.Join(sliceValues, ","))
+			query.Add(name, strings.Join(sliceValues, ","))
 		default:
-			query.Add(strings.ToLower(name), fmt.Sprintf("%v", field.Interface()))
+			query.Add(name, fmt.Sprintf("%v", field.Interface()))
 		}
 	}
 	return query.Encode()
