@@ -12,37 +12,40 @@ import (
 	"github.com/thiagozs/go-xutils/rsa"
 	"github.com/thiagozs/go-xutils/slices"
 	"github.com/thiagozs/go-xutils/strings"
+	"github.com/thiagozs/go-xutils/structs"
 )
 
 type XUtils struct {
-	calc   *calc.Calc
-	cnpj   *cnpj.CNPJ
-	email  *email.Email
-	slices *slices.Slices
-	str    *strings.Strings
-	md5    *md5.Md5
-	rsa    *rsa.RSA
-	rsaPem *rsa.RSAPem
-	aes    *aes.AES
-	csv    *csv.CSV
-	bools  *bools.Bools
-	cpf    *cpf.CPF
+	calc    *calc.Calc
+	cnpj    *cnpj.CNPJ
+	email   *email.Email
+	slices  *slices.Slices
+	str     *strings.Strings
+	md5     *md5.Md5
+	rsa     *rsa.RSA
+	rsaPem  *rsa.RSAPem
+	aes     *aes.AES
+	csv     *csv.CSV
+	bools   *bools.Bools
+	cpf     *cpf.CPF
+	structs *structs.Structs
 }
 
 func New() *XUtils {
 	return &XUtils{
-		slices: slices.New(strings.New()),
-		str:    strings.New(),
-		calc:   calc.New(),
-		cnpj:   cnpj.New(),
-		email:  email.New(),
-		md5:    md5.New(),
-		rsa:    rsa.New(),
-		rsaPem: rsa.NewPem(),
-		aes:    aes.New(),
-		csv:    csv.New(),
-		bools:  bools.New(),
-		cpf:    cpf.New(),
+		slices:  slices.New(strings.New()),
+		str:     strings.New(),
+		calc:    calc.New(),
+		cnpj:    cnpj.New(),
+		email:   email.New(),
+		md5:     md5.New(),
+		rsa:     rsa.New(),
+		rsaPem:  rsa.NewPem(),
+		aes:     aes.New(),
+		csv:     csv.New(),
+		bools:   bools.New(),
+		cpf:     cpf.New(),
+		structs: structs.New(),
 	}
 }
 
@@ -92,4 +95,8 @@ func (x *XUtils) Bools() *bools.Bools {
 
 func (x *XUtils) CPF() *cpf.CPF {
 	return x.cpf
+}
+
+func (x *XUtils) Structs() *structs.Structs {
+	return x.structs
 }
