@@ -5,6 +5,7 @@ import (
 	"github.com/thiagozs/go-xutils/bools"
 	"github.com/thiagozs/go-xutils/calc"
 	"github.com/thiagozs/go-xutils/cnpj"
+	"github.com/thiagozs/go-xutils/convs"
 	"github.com/thiagozs/go-xutils/cpf"
 	"github.com/thiagozs/go-xutils/csv"
 	"github.com/thiagozs/go-xutils/email"
@@ -29,6 +30,7 @@ type XUtils struct {
 	bools   *bools.Bools
 	cpf     *cpf.CPF
 	structs *structs.Structs
+	convs   *convs.Convs
 }
 
 func New() *XUtils {
@@ -46,6 +48,7 @@ func New() *XUtils {
 		bools:   bools.New(),
 		cpf:     cpf.New(),
 		structs: structs.New(),
+		convs:   convs.New(),
 	}
 }
 
@@ -99,4 +102,8 @@ func (x *XUtils) CPF() *cpf.CPF {
 
 func (x *XUtils) Structs() *structs.Structs {
 	return x.structs
+}
+
+func (x *XUtils) Convs() *convs.Convs {
+	return x.convs
 }

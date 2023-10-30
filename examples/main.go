@@ -58,4 +58,18 @@ func main() {
 
 	println("MD5 Hash:", utils.MD5().MD5Hash("123456"))
 
+	bt, err := utils.Convs().ToBool("true")
+	if err != nil {
+		panic(err)
+	}
+
+	println("ToBool:", bt)
+
+	num, err := utils.Convs().ToInt64("123456")
+	if err != nil {
+		panic(err)
+	}
+
+	println("ToInt64:", num)
+
 }
