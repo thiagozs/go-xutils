@@ -2,8 +2,10 @@ package strings
 
 import (
 	"fmt"
+	"math/rand"
 	"regexp"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/google/uuid"
@@ -147,4 +149,26 @@ func (s *Strings) EscapeString(input string) string {
 	}
 
 	return builder.String()
+}
+
+func (s *Strings) RandomStrE(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
+	var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[seededRand.Intn(len(charset))]
+	}
+	return string(b)
+}
+
+func (s *Strings) RandomStr(length int) string {
+	var result string
+	for len(result) < length {
+		str := s.RandomStrE(length)
+		re, _ := regexp.Compile(`[^a-zA-Z0-9\s]+`)
+		str = re.ReplaceAllString(str, "")
+		result += str
+	}
+	return result[:length]
 }

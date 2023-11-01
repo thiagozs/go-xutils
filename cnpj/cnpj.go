@@ -102,5 +102,6 @@ func (c *CNPJ) TrimCNPJ(cnpj string) string {
 	cnpj = strings.ReplaceAll(cnpj, ".", "")
 	cnpj = strings.ReplaceAll(cnpj, "-", "")
 	cnpj = strings.ReplaceAll(cnpj, "/", "")
+	cnpj = strings.ReplaceAll(cnpj, " ", "")
 	return cnpj
 }

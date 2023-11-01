@@ -11,38 +11,48 @@ func New() *Calc {
 	return &Calc{}
 }
 
-// CalculateLimitAndOffset calculates limit and offset
-func (c Calc) CalculateLimitAndOffsetStr(pageNumberStr, pageSizeStr string) (limit, offset int32, err error) {
-	pageNumber, err := strconv.Atoi(pageNumberStr)
+func (c Calc) CalculateLimitAndOffset(pageNumber, pageSize int32) (int32, int32, error) {
+	return CalculateLimitAndOffset(Int32Convertible(pageNumber), Int32Convertible(pageSize))
+}
+
+func (c Calc) CalculateLimitAndOffsetStr(pageNumber, pageSize string) (int32, int32, error) {
+	return CalculateLimitAndOffset(StringConvertible(pageNumber), StringConvertible(pageSize))
+}
+
+func CalculateLimitAndOffset[T Convertible](pageNumber, pageSize T) (int32, int32, error) {
+	pageNumberInt, err := pageNumber.ToInt32()
 	if err != nil {
-		return 0, 0, fmt.Errorf("calc: error converting pageNumberStr to int: %v", err)
+		return 0, 0, fmt.Errorf("calc: error converting pageNumber to int32: %w", err)
 	}
 
-	pageSize, err := strconv.Atoi(pageSizeStr)
+	pageSizeInt, err := pageSize.ToInt32()
 	if err != nil {
-		return 0, 0, fmt.Errorf("calc: error converting pageSizeStr to int: %v", err)
+		return 0, 0, fmt.Errorf("calc: error converting pageSize to int32: %w", err)
 	}
 
-	if pageNumber < 1 || pageSize < 1 {
+	if pageNumberInt < 1 || pageSizeInt < 1 {
 		return 0, 0, fmt.Errorf("calc: pageNumber and pageSize must be greater than 0")
 	}
 
-	limit, offset = c.CalculateLimitAndOffsetInt32(int32(pageNumber), int32(pageSize))
+	limit := pageSizeInt
+	offset := (pageNumberInt - 1) * pageSizeInt
+
 	return limit, offset, nil
 }
 
-// CalculateLimitAndOffsetInt32 calculates limit and offset
-func (c Calc) CalculateLimitAndOffsetInt32(pageNumber, pageSize int32) (limit, offset int32) {
-	if pageNumber < 1 {
-		pageNumber = 1
-	}
+type Convertible interface {
+	ToInt32() (int32, error)
+}
 
-	if pageSize < 1 {
-		pageSize = 10
-	}
+type StringConvertible string
 
-	limit = int32(pageSize)
-	offset = int32((pageNumber - 1) * pageSize)
+func (s StringConvertible) ToInt32() (int32, error) {
+	i, err := strconv.Atoi(string(s))
+	return int32(i), err
+}
 
-	return limit, offset
+type Int32Convertible int32
+
+func (i Int32Convertible) ToInt32() (int32, error) {
+	return int32(i), nil
 }

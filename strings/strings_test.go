@@ -2,6 +2,7 @@ package strings
 
 import (
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -40,7 +41,6 @@ func (suite *StringsSuite) TestToCamelCase() {
 }
 
 func (suite *StringsSuite) TestGenerateUniqueSlug() {
-	strs := New()
 
 	tests := []struct {
 		input string
@@ -53,11 +53,11 @@ func (suite *StringsSuite) TestGenerateUniqueSlug() {
 	slugRegex, _ := regexp.Compile("^[a-z0-9]+(-[a-z0-9]+)*-[a-z0-9]{6}$")
 
 	for _, test := range tests {
-		slug := strs.GenerateUniqueSlug(test.input)
+		slug := suite.str.GenerateUniqueSlug(test.input)
 		assert.Regexp(suite.T(), slugRegex, slug, "The slug does not match the expected pattern")
 
 		// Ensure uniqueness by generating another slug and comparing
-		anotherSlug := strs.GenerateUniqueSlug(test.input)
+		anotherSlug := suite.str.GenerateUniqueSlug(test.input)
 		assert.NotEqual(suite.T(), slug, anotherSlug, "The slugs are not unique")
 	}
 }
@@ -152,6 +152,36 @@ func (suite *StringsSuite) TestEscapeString() {
 	for _, test := range tests {
 		result := suite.str.EscapeString(test.input)
 		assert.Equal(suite.T(), test.expected, result, "The escape string function did not produce the expected result")
+	}
+}
+
+func (suite *StringsSuite) TestRandomStrE() {
+	length := 10
+	result := suite.str.RandomStrE(length)
+	if len(result) != length {
+		suite.T().Errorf("Expected string of length %d, got %d", length, len(result))
+	}
+
+	// Check if all characters in result are in the allowed charset
+	charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
+	for _, char := range result {
+		if !strings.ContainsRune(charset, char) {
+			suite.T().Errorf("Character '%c' not in allowed charset", char)
+		}
+	}
+}
+
+func (suite *StringsSuite) TestRandomStr() {
+	length := 10
+	result := suite.str.RandomStr(length)
+	if len(result) != length {
+		suite.T().Errorf("Expected string of length %d, got %d", length, len(result))
+	}
+
+	// Check if result contains only alphanumeric characters
+	re := regexp.MustCompile(`^[a-zA-Z0-9]+$`)
+	if !re.MatchString(result) {
+		suite.T().Errorf("Result contains special characters: %s", result)
 	}
 }
 
