@@ -14,6 +14,7 @@ import (
 	"github.com/thiagozs/go-xutils/slices"
 	"github.com/thiagozs/go-xutils/strings"
 	"github.com/thiagozs/go-xutils/structs"
+	"github.com/thiagozs/go-xutils/xls"
 )
 
 type XUtils struct {
@@ -31,6 +32,7 @@ type XUtils struct {
 	cpf     *cpf.CPF
 	structs *structs.Structs
 	convs   *convs.Convs
+	xls     *xls.XLS
 }
 
 func New() *XUtils {
@@ -49,6 +51,7 @@ func New() *XUtils {
 		cpf:     cpf.New(),
 		structs: structs.New(),
 		convs:   convs.New(),
+		xls:     xls.New(),
 	}
 }
 
@@ -106,4 +109,8 @@ func (x *XUtils) Structs() *structs.Structs {
 
 func (x *XUtils) Convs() *convs.Convs {
 	return x.convs
+}
+
+func (x *XUtils) XLS() *xls.XLS {
+	return x.xls
 }
