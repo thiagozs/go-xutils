@@ -9,72 +9,72 @@ import (
 func main() {
 	utils := xutils.New()
 
-	// limit, offset, err := utils.Calc().CalculateLimitAndOffsetStr("10", "10")
-	// if err != nil {
-	// 	panic(err)
-	// }
+	limit, offset, err := utils.Calc().CalculateLimitAndOffsetStr("10", "10")
+	if err != nil {
+		panic(err)
+	}
 
-	// println("Limit and offset:", limit, offset)
+	println("Limit and offset:", limit, offset)
 
-	// aes := utils.AES().RegisterKeys("IgkibX71IEf382PT", "IgkibX71IEf382PT")
-	// aesc, err := aes.Encrypt("123456")
-	// if err != nil {
-	// 	panic(err)
-	// }
+	aes := utils.AES().RegisterKeys("IgkibX71IEf382PT", "IgkibX71IEf382PT")
+	aesc, err := aes.Encrypt("123456")
+	if err != nil {
+		panic(err)
+	}
 
-	// println("AES EncryptKey:", aesc)
+	println("AES EncryptKey:", aesc)
 
-	// aesdec, err := aes.Decrypt(aesc)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	aesdec, err := aes.Decrypt(aesc)
+	if err != nil {
+		panic(err)
+	}
 
-	// println("AES DEcryptKey:", aesdec)
+	println("AES DEcryptKey:", aesdec)
 
-	// priv, pub := utils.RSAPem().RSAGenKeyPair()
+	priv, pub := utils.RSAPem().RSAGenKeyPair()
 
-	// privpem := utils.RSAPem().RSAExportPrivateKeyAsPem(priv)
+	privpem := utils.RSAPem().RSAExportPrivateKeyAsPem(priv)
 
-	// println("RSA PrivateKey:", privpem)
+	println("RSA PrivateKey:", privpem)
 
-	// pubpem, err := utils.RSAPem().RSAExportPublicKeyAsPem(pub)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	pubpem, err := utils.RSAPem().RSAExportPublicKeyAsPem(pub)
+	if err != nil {
+		panic(err)
+	}
 
-	// println("RSA PublicKey:", pubpem)
+	println("RSA PublicKey:", pubpem)
 
-	// b := utils.RSA().PublicKey(pubpem)
-	// rsae, err := b.Encrypt("123456")
-	// if err != nil {
-	// 	panic(err)
-	// }
+	b := utils.RSA().PublicKey(pubpem)
+	rsae, err := b.Encrypt("123456")
+	if err != nil {
+		panic(err)
+	}
 
-	// println("RSA EncryptKey:", rsae)
+	println("RSA EncryptKey:", rsae)
 
-	// a := utils.RSA().PrivateKey(privpem)
-	// rsad, err := a.Decrypt(rsae)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	a := utils.RSA().PrivateKey(privpem)
+	rsad, err := a.Decrypt(rsae)
+	if err != nil {
+		panic(err)
+	}
 
-	// println("RSA DEcryptKey:", rsad)
+	println("RSA DEcryptKey:", rsad)
 
-	// println("MD5 Hash:", utils.MD5().MD5Hash("123456"))
+	println("MD5 Hash:", utils.MD5().MD5Hash("123456"))
 
-	// bt, err := utils.Convs().ToBool("true")
-	// if err != nil {
-	// 	panic(err)
-	// }
+	bt, err := utils.Convs().ToBool("true")
+	if err != nil {
+		panic(err)
+	}
 
-	// println("ToBool:", bt)
+	println("ToBool:", bt)
 
-	// num, err := utils.Convs().ToInt64("123456")
-	// if err != nil {
-	// 	panic(err)
-	// }
+	num, err := utils.Convs().ToInt64("123456")
+	if err != nil {
+		panic(err)
+	}
 
-	// println("ToInt64:", num)
+	println("ToInt64:", num)
 
 	mm, err := utils.XLS().ParseToMap("./xls/data/test.xlsx")
 	if err != nil {
