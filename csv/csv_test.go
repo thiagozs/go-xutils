@@ -56,6 +56,7 @@ func TestToXLSX(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
+	defer os.Remove(tmpFile.Name())
 
 	c := New()
 

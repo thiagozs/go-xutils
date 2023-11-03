@@ -4,72 +4,42 @@ import (
 	"os"
 	"reflect"
 	"testing"
-
-	"github.com/xuri/excelize/v2"
 )
 
 func TestToCSV(t *testing.T) {
-	xlsxPath := "./test.xlsx"
-	csvPath := "./test.csv"
 
-	f := excelize.NewFile()
-	f.SetCellValue("Sheet1", "A1", "Hello")
-	f.SetCellValue("Sheet1", "B1", "World")
-	if err := f.SaveAs(xlsxPath); err != nil {
-		t.Fatalf("Unable to create test xlsx file: %v", err)
-	}
-
-	defer os.Remove(xlsxPath)
-	defer os.Remove(csvPath)
-
-	x := New()
-
-	err := x.ToCSV(xlsxPath, csvPath)
+	fileTemp, err := os.CreateTemp("", "test.*.csv")
 	if err != nil {
 		t.Errorf("ToCSV() error = %v", err)
 	}
 
-	if _, err := os.Stat(csvPath); os.IsNotExist(err) {
+	defer os.Remove(fileTemp.Name())
+
+	x := New()
+
+	err = x.ToCSV("./data/test.xlsx", fileTemp.Name())
+	if err != nil {
+		t.Errorf("ToCSV() error = %v", err)
+	}
+
+	if _, err := os.Stat(fileTemp.Name()); os.IsNotExist(err) {
 		t.Errorf("CSV file was not created")
 	}
 
 }
 
 func TestParseToMap(t *testing.T) {
-	xlsxPath := "./testp.xlsx"
-	sheetName := "Sheet1"
-
-	f := excelize.NewFile()
-
-	f.NewSheet(sheetName)
-	f.SetCellValue(sheetName, "A1", "Header1")
-	f.SetCellValue(sheetName, "B1", "Header2")
-	f.SetCellValue(sheetName, "A2", "Value1")
-	f.SetCellValue(sheetName, "B2", "Value2")
-
-	if err := f.SaveAs(xlsxPath); err != nil {
-		t.Fatalf("Unable to create test xlsx file: %v", err)
-	}
-
-	defer func() {
-		err := f.Close()
-		if err != nil {
-			t.Fatalf("Unable to close the xlsx file: %v", err)
-		}
-		err = os.Remove(xlsxPath)
-		if err != nil {
-			t.Fatalf("Unable to remove the xlsx file: %v", err)
-		}
-	}()
 
 	expected := []map[string]string{
-		{"col0": "Header1", "col1": "Header2"},
-		{"col0": "Value1", "col1": "Value2"},
+		{"col0": "Name", "col1": "Age", "col2": "City"},
+		{"col0": "Test1", "col1": "20", "col2": "NY"},
+		{"col0": "Test2", "col1": "15", "col2": "NJ"},
+		{"col0": "Test3", "col1": "33", "col2": "CA"},
 	}
 
 	x := New()
 
-	records, err := x.ParseToMap(xlsxPath)
+	records, err := x.ParseToMap("./data/test.xlsx")
 	if err != nil {
 		t.Errorf("ParseToMap() error = %v", err)
 	}

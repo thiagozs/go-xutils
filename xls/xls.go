@@ -19,9 +19,10 @@ func (x *XLS) ParseToMap(filePath string) ([]map[string]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error opening xlsx file: %w", err)
 	}
+
 	defer f.Close()
 
-	rows, err := f.GetRows("Sheet1")
+	rows, err := f.GetRows(f.GetSheetList()[0])
 	if err != nil {
 		return nil, fmt.Errorf("error getting rows from xlsx file: %w", err)
 	}
@@ -46,7 +47,7 @@ func (x *XLS) ToCSV(xlsxPath, csvPath string) error {
 	}
 	defer f.Close()
 
-	rows, err := f.GetRows("Sheet1")
+	rows, err := f.GetRows(f.GetSheetList()[0])
 	if err != nil {
 		return fmt.Errorf("error getting rows from xlsx file: %w", err)
 	}
