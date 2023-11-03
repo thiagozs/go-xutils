@@ -69,3 +69,67 @@ func (x *XLS) ToCSV(xlsxPath, csvPath string) error {
 
 	return nil
 }
+
+func (x *XLS) GetHeadersFromMap(mapper []map[string]string) ([]string, error) {
+	if len(mapper) == 0 {
+		return nil, fmt.Errorf("mapper is empty")
+	}
+
+	firstRow := mapper[0]
+
+	var headers []string
+	for i := 0; ; i++ {
+		key := fmt.Sprintf("col%d", i)
+		header, ok := firstRow[key]
+		if !ok {
+			break
+		}
+		headers = append(headers, header)
+	}
+
+	return headers, nil
+}
+
+func (x *XLS) GetHeaders(xlsxPath string) ([]string, error) {
+	f, err := excelize.OpenFile(xlsxPath)
+	if err != nil {
+		return nil, fmt.Errorf("error opening xlsx file: %w", err)
+	}
+	defer f.Close()
+
+	rows, err := f.GetRows(f.GetSheetList()[0])
+	if err != nil {
+		return nil, fmt.Errorf("error getting rows from xlsx file: %w", err)
+	}
+
+	return rows[0], nil
+}
+
+func (x *XLS) GetRowsFromMap(mapper []map[string]string) ([][]string, error) {
+	var rows [][]string
+	for _, v := range mapper {
+		var row []string
+		for _, vv := range v {
+			row = append(row, vv)
+		}
+
+		rows = append(rows, row)
+	}
+
+	return rows, nil
+}
+
+func (x *XLS) GetRows(xlsxPath string) ([][]string, error) {
+	f, err := excelize.OpenFile(xlsxPath)
+	if err != nil {
+		return nil, fmt.Errorf("error opening xlsx file: %w", err)
+	}
+	defer f.Close()
+
+	rows, err := f.GetRows(f.GetSheetList()[0])
+	if err != nil {
+		return nil, fmt.Errorf("error getting rows from xlsx file: %w", err)
+	}
+
+	return rows, nil
+}
