@@ -6,6 +6,10 @@ import (
 	"testing"
 )
 
+const (
+	xlsxFilePath = "./data/test.xlsx"
+)
+
 func TestToCSV(t *testing.T) {
 	fileTemp, err := os.CreateTemp("", "test.*.csv")
 	if err != nil {
@@ -16,7 +20,7 @@ func TestToCSV(t *testing.T) {
 
 	x := New()
 
-	err = x.ToCSV("./data/test.xlsx", fileTemp.Name())
+	err = x.ToCSV(xlsxFilePath, fileTemp.Name())
 	if err != nil {
 		t.Errorf("ToCSV() error = %v", err)
 	}
@@ -38,7 +42,7 @@ func TestParseToMap(t *testing.T) {
 
 	x := New()
 
-	records, err := x.ParseToMap("./data/test.xlsx")
+	records, err := x.ParseToMap(xlsxFilePath)
 	if err != nil {
 		t.Errorf("ParseToMap() error = %v", err)
 	}
@@ -81,8 +85,8 @@ func TestGetHeadersFromMap(t *testing.T) {
 
 func TestGetHeaders(t *testing.T) {
 	x := New()
-	expectedHeaders := []string{"Name", "Age", "City"} // Replace with actual headers from your test.xlsx
-	headers, err := x.GetHeaders("./data/test.xlsx")
+	expectedHeaders := []string{"Name", "Age", "City"}
+	headers, err := x.GetHeaders(xlsxFilePath)
 	if err != nil {
 		t.Errorf("GetHeaders returned an error: %v", err)
 	}
@@ -94,14 +98,18 @@ func TestGetHeaders(t *testing.T) {
 func TestGetRowsFromMap(t *testing.T) {
 	x := New()
 	mapper := []map[string]string{
-		{"col1": "value1", "col2": "value2"},
-		{"col1": "value3", "col2": "value4"},
+		{"col0": "Name", "col1": "Age", "col2": "City"},
+		{"col0": "Test1", "col1": "20", "col2": "NY"},
+		{"col0": "Test2", "col1": "15", "col2": "NJ"},
+		{"col0": "Test3", "col1": "33", "col2": "CA"},
 	}
 
-	expectedRows := [][]string{
-		{"value1", "value2"},
-		{"value3", "value4"},
+	expectedRows := []map[string]string{
+		{"col0": "Test1", "col1": "20", "col2": "NY"},
+		{"col0": "Test2", "col1": "15", "col2": "NJ"},
+		{"col0": "Test3", "col1": "33", "col2": "CA"},
 	}
+
 	rows, err := x.GetRowsFromMap(mapper)
 	if err != nil {
 		t.Errorf("GetRowsFromMap returned an error: %v", err)
@@ -121,7 +129,7 @@ func TestGetRows(t *testing.T) {
 		{"Test3", "33", "CA"},
 	}
 
-	rows, err := x.GetRows("./data/test.xlsx")
+	rows, err := x.GetRows(xlsxFilePath)
 	if err != nil {
 		t.Errorf("GetRows returned an error: %v", err)
 	}

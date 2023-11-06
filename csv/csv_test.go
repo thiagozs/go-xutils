@@ -186,8 +186,8 @@ func TestGetRowsFromMap(t *testing.T) {
 		return
 	}
 
-	expectedRows := [][]string{
-		{"John", "30", "New York"},
+	expectedRows := []map[string]string{
+		{"col0": "John", "col1": "30", "col2": "New York"},
 	}
 	if !reflect.DeepEqual(rows, expectedRows) {
 		t.Errorf("GetRowsFromMap() = %v, want %v", rows, expectedRows)

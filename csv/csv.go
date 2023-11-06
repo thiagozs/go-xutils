@@ -8,6 +8,14 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+const (
+	ErrorOpenCSVFile   = "error opening CSV file: %w"
+	ErrorReadCSVFile   = "error reading CSV file: %w"
+	ErrorSaveXLSXFile  = "error saving XLSX file: %w"
+	ErrorMapperIsEmpty = "mapper is empty"
+	ErrorReadingHeader = "error reading header from CSV file: %w"
+)
+
 type CSV struct{}
 
 func New() *CSV {
@@ -51,7 +59,7 @@ func (c *CSV) ParseToMap(filePath string) ([]map[string]string, error) {
 func (c *CSV) ToXLSX(csvFilePath, xlsxFilePath string) error {
 	csvFile, err := os.Open(csvFilePath)
 	if err != nil {
-		return fmt.Errorf("error opening CSV file: %w", err)
+		return fmt.Errorf(ErrorOpenCSVFile, err)
 	}
 	defer csvFile.Close()
 
@@ -59,7 +67,7 @@ func (c *CSV) ToXLSX(csvFilePath, xlsxFilePath string) error {
 
 	records, err := reader.ReadAll()
 	if err != nil {
-		return fmt.Errorf("error reading CSV file: %w", err)
+		return fmt.Errorf(ErrorReadCSVFile, err)
 	}
 
 	xlsx := excelize.NewFile()
@@ -74,7 +82,7 @@ func (c *CSV) ToXLSX(csvFilePath, xlsxFilePath string) error {
 	}
 
 	if err := xlsx.SaveAs(xlsxFilePath); err != nil {
-		return fmt.Errorf("error saving XLSX file: %w", err)
+		return fmt.Errorf(ErrorSaveXLSXFile, err)
 	}
 
 	return nil
@@ -83,7 +91,7 @@ func (c *CSV) ToXLSX(csvFilePath, xlsxFilePath string) error {
 func (c *CSV) GetHeaders(csvFilePath string) ([]string, error) {
 	csvFile, err := os.Open(csvFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("error opening CSV file: %w", err)
+		return nil, fmt.Errorf(ErrorOpenCSVFile, err)
 	}
 	defer csvFile.Close()
 
@@ -91,7 +99,7 @@ func (c *CSV) GetHeaders(csvFilePath string) ([]string, error) {
 
 	headers, err := reader.Read()
 	if err != nil {
-		return nil, fmt.Errorf("error reading CSV file: %w", err)
+		return nil, fmt.Errorf(ErrorReadCSVFile, err)
 	}
 
 	return headers, nil
@@ -99,7 +107,7 @@ func (c *CSV) GetHeaders(csvFilePath string) ([]string, error) {
 
 func (c *CSV) GetHeadersFromMap(mapper []map[string]string) ([]string, error) {
 	if len(mapper) == 0 {
-		return nil, fmt.Errorf("mapper is empty")
+		return nil, fmt.Errorf(ErrorMapperIsEmpty)
 	}
 
 	firstRow := mapper[0]
@@ -120,7 +128,7 @@ func (c *CSV) GetHeadersFromMap(mapper []map[string]string) ([]string, error) {
 func (c *CSV) GetRows(csvFilePath string) ([][]string, error) {
 	csvFile, err := os.Open(csvFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("error opening CSV file: %w", err)
+		return nil, fmt.Errorf(ErrorOpenCSVFile, err)
 	}
 	defer csvFile.Close()
 
@@ -128,37 +136,24 @@ func (c *CSV) GetRows(csvFilePath string) ([][]string, error) {
 
 	// Read and discard the header row
 	if _, err := reader.Read(); err != nil {
-		return nil, fmt.Errorf("error reading header from CSV file: %w", err)
+		return nil, fmt.Errorf(ErrorReadingHeader, err)
 	}
 
 	// Read the rest of the rows
 	rows, err := reader.ReadAll()
 	if err != nil {
-		return nil, fmt.Errorf("error reading CSV file: %w", err)
+		return nil, fmt.Errorf(ErrorReadCSVFile, err)
 	}
 
 	return rows, nil
 }
 
-func (c *CSV) GetRowsFromMap(mapper []map[string]string) ([][]string, error) {
+func (c *CSV) GetRowsFromMap(mapper []map[string]string) ([]map[string]string, error) {
 	if len(mapper) == 0 {
-		return nil, fmt.Errorf("mapper is empty")
+		return nil, fmt.Errorf(ErrorMapperIsEmpty)
 	}
 
-	// Start from the second element to skip the headers.
-	var rows [][]string
-	for _, record := range mapper[1:] { // Skip the first map which contains headers.
-		var row []string
-		for i := 0; ; i++ {
-			key := fmt.Sprintf("col%d", i)
-			value, ok := record[key]
-			if !ok {
-				break
-			}
-			row = append(row, value)
-		}
-		rows = append(rows, row)
-	}
+	dataRows := mapper[1:]
 
-	return rows, nil
+	return dataRows, nil
 }
