@@ -60,7 +60,7 @@ func main() {
 
 	println("RSA DEcryptKey:", rsad)
 
-	println("MD5 Hash:", utils.MD5().MD5Hash("123456"))
+	println("MD5 Hash:", utils.Hash().MD5("123456"))
 
 	bt, err := utils.Convs().ToBool("true")
 	if err != nil {
@@ -94,4 +94,17 @@ func main() {
 
 	fmt.Printf("headers %v\n", header)
 
+	phone, err := utils.Phone().Normalize("11999999999", "BR")
+	if err != nil {
+		panic(err)
+	}
+
+	println("Phone:", phone)
+
+	phone, err = utils.Phone().Normalize("1936114444", "BR")
+	if err != nil {
+		panic(err)
+	}
+
+	println("Phone:", phone)
 }

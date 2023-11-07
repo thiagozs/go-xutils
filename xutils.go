@@ -9,7 +9,10 @@ import (
 	"github.com/thiagozs/go-xutils/cpf"
 	"github.com/thiagozs/go-xutils/csv"
 	"github.com/thiagozs/go-xutils/email"
-	"github.com/thiagozs/go-xutils/md5"
+	"github.com/thiagozs/go-xutils/geo"
+	"github.com/thiagozs/go-xutils/hash"
+	"github.com/thiagozs/go-xutils/ip"
+	"github.com/thiagozs/go-xutils/phone"
 	"github.com/thiagozs/go-xutils/rsa"
 	"github.com/thiagozs/go-xutils/slices"
 	"github.com/thiagozs/go-xutils/strings"
@@ -23,7 +26,7 @@ type XUtils struct {
 	email   *email.Email
 	slices  *slices.Slices
 	str     *strings.Strings
-	md5     *md5.Md5
+	hash    *hash.Hash
 	rsa     *rsa.RSA
 	rsaPem  *rsa.RSAPem
 	aes     *aes.AES
@@ -33,6 +36,9 @@ type XUtils struct {
 	structs *structs.Structs
 	convs   *convs.Convs
 	xls     *xls.XLS
+	phone   *phone.Phone
+	ip      *ip.Ip
+	geo     *geo.Geo
 }
 
 func New() *XUtils {
@@ -42,7 +48,7 @@ func New() *XUtils {
 		calc:    calc.New(),
 		cnpj:    cnpj.New(),
 		email:   email.New(),
-		md5:     md5.New(),
+		hash:    hash.New(),
 		rsa:     rsa.New(),
 		rsaPem:  rsa.NewPem(),
 		aes:     aes.New(),
@@ -52,6 +58,9 @@ func New() *XUtils {
 		structs: structs.New(),
 		convs:   convs.New(),
 		xls:     xls.New(),
+		phone:   phone.New(),
+		ip:      ip.New(),
+		geo:     geo.New(),
 	}
 }
 
@@ -75,8 +84,8 @@ func (x *XUtils) Email() *email.Email {
 	return x.email
 }
 
-func (x *XUtils) MD5() *md5.Md5 {
-	return x.md5
+func (x *XUtils) Hash() *hash.Hash {
+	return x.hash
 }
 
 func (x *XUtils) RSA() *rsa.RSA {
@@ -113,4 +122,16 @@ func (x *XUtils) Convs() *convs.Convs {
 
 func (x *XUtils) XLS() *xls.XLS {
 	return x.xls
+}
+
+func (x *XUtils) Phone() *phone.Phone {
+	return x.phone
+}
+
+func (x *XUtils) Ip() *ip.Ip {
+	return x.ip
+}
+
+func (x *XUtils) Geo() *geo.Geo {
+	return x.geo
 }
