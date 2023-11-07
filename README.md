@@ -1,45 +1,75 @@
-# XUtils - a golang tools for development
+# XUtils - a Golang Toolkit for Development
 
-## MD5
+## Introduction
 
-The md5 package contains utilities for hashing strings using the MD5 algorithm. It provides a straightforward way to generate MD5 hashes from input strings, ensuring data integrity and security.
+A collection of tools designed to improve your day-to-day development tasks.
 
-## AES
+* **aes**: This directory contains code or scripts related to the Advanced Encryption Standard (AES), a symmetric encryption algorithm used to secure data.
 
-The aes package offers tools for encrypting and decrypting data using the Advanced Encryption Standard (AES) algorithm. It ensures that sensitive information is securely encrypted before storage or transmission.
+* **bools**: This folder includes utilities or functions that operate on boolean values, such as logical operations or boolean algebra tools.
 
-## RSA
+* **calc**: Short for "calculator," this directory houses programs or scripts that perform various mathematical calculations.
 
-In the rsa folder, you'll find tools for RSA encryption and decryption, including OEM optimizations. It provides functionalities for secure data transmission and storage, ensuring data privacy and integrity.
+* **cnpj**: Specific to Brazil's National Registry of Legal Entities (Cadastro Nacional da Pessoa Jurídica), this contains validation or generation scripts for CNPJ numbers.
 
-## Strings
+* **convs**: Likely shorthand for "conversions," this folder contains code that handles the conversion between different data types or units.
 
-The strings package is equipped with utilities for string manipulation and processing. It includes functions for escaping strings, ensuring that they are safely processed and stored.
+* **cpf**: Similar to `cnpj`, this directory relates to the Brazilian Individual Taxpayer Registry (Cadastro de Pessoas Físicas), with scripts for CPF number validation or generation.
 
-## Slices
+* **csv**: Known for "Comma-Separated Values," this folder includes tools or scripts for processing CSV files, with a `data` subdirectory that may contain actual CSV files.
 
-The slices package contains tools for slice manipulation, offering utilities that make working with slices more efficient and less error-prone.
+* **email**: This directory contains scripts or libraries for handling email operations, such as sending, receiving, or validating email addresses.
 
-## Email
+* **examples**: Typically, this folder includes example scripts or code snippets demonstrating how to use the libraries or functions found in the other directories.
 
-The email package provides a utility for validating email addresses. It ensures that the email addresses are in the correct format, aiding in data validation and integrity.
+* **geo**: This folder deals with geographical computations or data processing, such as location validation, coordinates conversion, or mapping functions.
 
-## CNPJ
+* **hash**: This directory contains functions for generating or verifying hash values, used in cryptography, data integrity, and password storage.
 
-The cnpj package offers tools for generating and validating CNPJ numbers. CNPJ is the National Registry of Legal Entities in Brazil, and this package ensures that the CNPJ numbers are valid.
+* **ip**: This is a collection of utilities for handling IP addresses, including validation, conversion, or network calculations.
 
-## Calc
+* **phone**: This directory is dedicated to phone number processing, such as formatting, validating, or extracting information from phone numbers.
 
-The calc package contains utilities for calculating some algorithim . It aids in efficiently retrieving and displaying data in chunks, enhancing the user experience in data navigation.
+* **rsa**: Named after the Rivest-Shamir-Adleman algorithm, this folder contains cryptographic code related to RSA encryption and decryption.
 
-## examples
+* **slices**: In programming, especially in languages like Go, slices are a data structure. This directory includes utilities for manipulating these structures.
 
-The examples folder contains sample codes and usage examples for the utilities provided in the project. It serves as a practical guide for implementing and utilizing the tools effectively.
+* **strings**: This folder contains functions and utilities for string manipulation, such as formatting, parsing, or analyzing text data.
 
-Each of these packages is designed to offer specific utilities that enhance the efficiency, security, and functionality of your Go applications. They are modular, easy to integrate, and optimized for performance.
+* **structs**: In languages like Go, structs are a way of defining complex data types. This directory includes definitions and utilities for working with structs.
+
+* **xls**: This directory is related to Excel spreadsheet processing, with tools for reading, writing, or manipulating `xls` files. The `data` subdirectory might contain sample spreadsheets or data sets.
+
+Each directory serves a specific purpose, reflecting the modular and organized structure of a well-designed software project.
+
+## Project folders
+
+```
+├── aes
+├── bools
+├── calc
+├── cnpj
+├── convs
+├── cpf
+├── csv
+│   └── data
+├── email
+├── examples
+├── geo
+├── hash
+├── ip
+├── phone
+├── rsa
+├── slices
+├── strings
+├── structs
+└── xls
+    └── data
+
+```
 
 ## Versioning and License
 
-Our version numbers adhere to the semantic versioning specification. You can explore the available versions by checking the tags on this repository. For more details about our license model, please refer to the LICENSE file.
+Our version numbers adhere to the Semantic Versioning specification. You can explore the available versions by checking the tags on this repository. For more details about our license model, please refer to the LICENSE file.
 
 © 2023, thiagozs.
