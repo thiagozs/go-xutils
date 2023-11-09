@@ -3,7 +3,6 @@ module github.com/thiagozs/go-xutils
 go 1.21
 
 require (
-	github.com/dongri/phonenumber v0.1.1
 	github.com/google/uuid v1.3.1
 	github.com/stretchr/testify v1.8.4
 	github.com/xuri/excelize/v2 v2.8.0
@@ -22,6 +21,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/richardlehane/mscfb v1.0.4 // indirect
 	github.com/richardlehane/msoleps v1.0.3 // indirect
+	github.com/thiagozs/go-phonegen v1.0.2
 	github.com/ttacon/libphonenumber v1.2.1
 	github.com/xuri/efp v0.0.0-20230802181842-ad255f2331ca // indirect
 	github.com/xuri/nfp v0.0.0-20230819163627-dc951e3ffe1a // indirect
