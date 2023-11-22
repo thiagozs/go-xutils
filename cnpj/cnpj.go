@@ -56,6 +56,8 @@ func (c *CNPJ) calculateCheckDigit(numbers []int) int {
 
 // IsValidCNPJ validates a CNPJ
 func (c *CNPJ) IsValid(cnpj string) bool {
+	cnpj = c.TrimCNPJ(cnpj)
+
 	if len(cnpj) != 14 {
 		return false
 	}

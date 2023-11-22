@@ -107,4 +107,12 @@ func main() {
 	}
 
 	println("Phone:", phone)
+
+	cnpj := "84.683.481/0776-33"
+
+	if utils.CNPJ().IsValid(utils.CNPJ().TrimCNPJ(cnpj)) {
+		println("CNPJ valid:", cnpj)
+	} else {
+		println("CNPJ INvalid:", cnpj)
+	}
 }
