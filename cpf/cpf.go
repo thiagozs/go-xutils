@@ -2,6 +2,7 @@ package cpf
 
 import (
 	"math/rand"
+	"regexp"
 	"strconv"
 	"time"
 )
@@ -92,4 +93,10 @@ func calculateCheckDigit(numbers []int, length int) int {
 		return 0
 	}
 	return 11 - remainder
+}
+
+// TrimCPF trims CPF
+func (c *CPF) TrimCPF(cpf string) string {
+	cpf = regexp.MustCompile(`\D`).ReplaceAllString(cpf, "")
+	return cpf
 }

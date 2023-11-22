@@ -42,3 +42,30 @@ func TestGenerateCPF(t *testing.T) {
 		})
 	}
 }
+
+func TestTrimCPF(t *testing.T) {
+	c := New()
+	tests := []struct {
+		cpf      string
+		expected string
+	}{
+		{"123.456.789-09", "12345678909"},
+		{"390.533.447-05", "39053344705"},
+		{"39053344705", "39053344705"},
+		{"39053344704", "39053344704"},
+		{"111.111.111-11", "11111111111"},
+		{"123", "123"},
+		{"", ""},
+		{"abcdefghijk", ""},
+		{"000.000.000-00", "00000000000"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.cpf, func(t *testing.T) {
+			actual := c.TrimCPF(test.cpf)
+			if actual != test.expected {
+				t.Errorf("expected %v, got %v", test.expected, actual)
+			}
+		})
+	}
+}

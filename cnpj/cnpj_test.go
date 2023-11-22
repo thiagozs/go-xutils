@@ -28,11 +28,31 @@ func TestCNPJ(t *testing.T) {
 	})
 
 	t.Run("Trim CNPJ", func(t *testing.T) {
-		originalCNPJ := "11.444.777/0001-61"
-		expectedTrimmedCNPJ := "11444777000161"
-		trimmedCNPJ := c.TrimCNPJ(originalCNPJ)
-		if trimmedCNPJ != expectedTrimmedCNPJ {
-			t.Errorf("expected: %s, actual: %s", expectedTrimmedCNPJ, trimmedCNPJ)
+		type testCase struct {
+			cnpj     string
+			expected string
+		}
+
+		tests := []testCase{
+			{"11.444.777/0001-61", "11444777000161"},
+			{"11.444.777/0001-61 ", "11444777000161"},
+			{" 11...444.777///0001-61", "11444777000161"},
+			{" 11.444.777/0001-61 ", "11444777000161"},
+			{"11.444.777/0001---61", "11444777000161"},
+			{"11.444.777/0001-61adas", "11444777000161"},
+			{"11+444+777/0001-61", "11444777000161"},
+			{"11.444.777/\\\\0001-61", "11444777000161"},
+			{"11444777000161", "11444777000161"},
+			{"11.444.777/0001-61$%^", "11444777000161"},
+		}
+
+		for _, test := range tests {
+			t.Run(test.cnpj, func(t *testing.T) {
+				actual := c.TrimCNPJ(test.cnpj)
+				if actual != test.expected {
+					t.Errorf("expected %v, got %v", test.expected, actual)
+				}
+			})
 		}
 	})
 }

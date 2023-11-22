@@ -2,8 +2,8 @@ package cnpj
 
 import (
 	"math/rand"
+	"regexp"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -101,9 +101,6 @@ func (c *CNPJ) IsValid(cnpj string) bool {
 
 // TrimCNPJ trims CNPJ
 func (c *CNPJ) TrimCNPJ(cnpj string) string {
-	cnpj = strings.ReplaceAll(cnpj, ".", "")
-	cnpj = strings.ReplaceAll(cnpj, "-", "")
-	cnpj = strings.ReplaceAll(cnpj, "/", "")
-	cnpj = strings.ReplaceAll(cnpj, " ", "")
+	cnpj = regexp.MustCompile(`\D`).ReplaceAllString(cnpj, "")
 	return cnpj
 }
