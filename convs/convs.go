@@ -35,6 +35,10 @@ func (c *Convs) ToBool(input string) (bool, error) {
 	return NewConverter[bool]().StringToType(input)
 }
 
+func (c *Convs) ToString(input any) (string, error) {
+	return NewConverter[any]().ToString(input)
+}
+
 type Converter[T any] struct{}
 
 func NewConverter[T any]() *Converter[T] {
@@ -126,5 +130,38 @@ func (c *Converter[T]) StringToType(s string) (T, error) {
 		return any(s).(T), nil
 	default:
 		return zero, fmt.Errorf("unsupported type: %T", zero)
+	}
+}
+
+func (c *Converter[T]) ToString(input T) (string, error) {
+	switch v := any(input).(type) {
+	case int:
+		return strconv.Itoa(v), nil
+	case int8:
+		return strconv.FormatInt(int64(v), 10), nil
+	case int16:
+		return strconv.FormatInt(int64(v), 10), nil
+	case int32:
+		return strconv.FormatInt(int64(v), 10), nil
+	case int64:
+		return strconv.FormatInt(v, 10), nil
+	case uint:
+		return strconv.FormatUint(uint64(v), 10), nil
+	case uint8:
+		return strconv.FormatUint(uint64(v), 10), nil
+	case uint16:
+		return strconv.FormatUint(uint64(v), 10), nil
+	case uint32:
+		return strconv.FormatUint(uint64(v), 10), nil
+	case uint64:
+		return strconv.FormatUint(v, 10), nil
+	case float32:
+		return strconv.FormatFloat(float64(v), 'f', -1, 32), nil
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64), nil
+	case bool:
+		return strconv.FormatBool(v), nil
+	default:
+		return "", fmt.Errorf("unsupported type: %T", input)
 	}
 }

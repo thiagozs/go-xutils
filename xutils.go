@@ -4,6 +4,7 @@ import (
 	"github.com/thiagozs/go-xutils/aes"
 	"github.com/thiagozs/go-xutils/bools"
 	"github.com/thiagozs/go-xutils/calc"
+	"github.com/thiagozs/go-xutils/cep"
 	"github.com/thiagozs/go-xutils/cnpj"
 	"github.com/thiagozs/go-xutils/convs"
 	"github.com/thiagozs/go-xutils/cpf"
@@ -39,6 +40,7 @@ type XUtils struct {
 	phone   *phone.Phone
 	ip      *ip.Ip
 	geo     *geo.Geo
+	cep     *cep.CEP
 }
 
 func New() *XUtils {
@@ -61,6 +63,7 @@ func New() *XUtils {
 		phone:   phone.New(),
 		ip:      ip.New(),
 		geo:     geo.New(),
+		cep:     cep.New(),
 	}
 }
 
@@ -134,4 +137,8 @@ func (x *XUtils) Ip() *ip.Ip {
 
 func (x *XUtils) Geo() *geo.Geo {
 	return x.geo
+}
+
+func (x *XUtils) CEP() *cep.CEP {
+	return x.cep
 }

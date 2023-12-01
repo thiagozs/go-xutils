@@ -95,3 +95,68 @@ func TestStringToType(t *testing.T) {
 		})
 	}
 }
+
+func TestToString(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   any
+		want    string
+		wantErr bool
+	}{
+		{
+			name:  "convert int to string",
+			input: int(123),
+			want:  "123",
+		},
+		{
+			name:  "convert int32 to string",
+			input: int32(12345),
+			want:  "12345",
+		},
+		{
+			name:  "convert int64 to string",
+			input: int64(123456789012345),
+			want:  "123456789012345",
+		},
+		{
+			name:  "convert float32 to string",
+			input: float32(123.45),
+			want:  "123.45",
+		},
+		{
+			name:  "convert float64 to string",
+			input: float64(1234567890.123456),
+			want:  "1234567890.123456",
+		},
+		{
+			name:  "convert bool (true) to string",
+			input: true,
+			want:  "true",
+		},
+		{
+			name:  "convert bool (false) to string",
+			input: false,
+			want:  "false",
+		},
+		{
+			name:    "invalid input for int",
+			input:   "abc",
+			want:    "",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			converter := NewConverter[any]()
+			got, err := converter.ToString(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ToString() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && got != tt.want {
+				t.Errorf("ToString() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

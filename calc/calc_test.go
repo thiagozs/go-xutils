@@ -118,4 +118,35 @@ func TestCalc(t *testing.T) {
 			t.Errorf("expected error, but got nil")
 		}
 	})
+
+	t.Run("Random In Range with Strings", func(t *testing.T) {
+		minStr := "10"
+		maxStr := "20"
+		min := int32(10)
+		max := int32(20)
+
+		random, err := c.RandomInRangeStr(minStr, maxStr)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		if random < min || random > max {
+			t.Errorf("expected random number between %d and %d, but got %d", min, max, random)
+		}
+	})
+
+	t.Run("Random In Range with Int32", func(t *testing.T) {
+		min := int32(10)
+		max := int32(20)
+
+		random, err := c.RandomInRange(min, max)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		if random < min || random > max {
+			t.Errorf("expected random number between %d and %d, but got %d", min, max, random)
+		}
+	})
+
 }

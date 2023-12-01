@@ -115,4 +115,8 @@ func main() {
 	} else {
 		println("CNPJ INvalid:", cnpj)
 	}
+
+	cep := utils.CEP().Generate()
+
+	println("CEP:", cep)
 }
