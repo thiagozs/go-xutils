@@ -10,6 +10,7 @@ import (
 	"github.com/thiagozs/go-xutils/cpf"
 	"github.com/thiagozs/go-xutils/csv"
 	"github.com/thiagozs/go-xutils/email"
+	"github.com/thiagozs/go-xutils/files"
 	"github.com/thiagozs/go-xutils/geo"
 	"github.com/thiagozs/go-xutils/hash"
 	"github.com/thiagozs/go-xutils/ip"
@@ -41,6 +42,7 @@ type XUtils struct {
 	ip      *ip.Ip
 	geo     *geo.Geo
 	cep     *cep.CEP
+	files   *files.Files
 }
 
 func New() *XUtils {
@@ -64,6 +66,7 @@ func New() *XUtils {
 		ip:      ip.New(),
 		geo:     geo.New(),
 		cep:     cep.New(),
+		files:   files.New(),
 	}
 }
 
@@ -141,4 +144,8 @@ func (x *XUtils) Geo() *geo.Geo {
 
 func (x *XUtils) CEP() *cep.CEP {
 	return x.cep
+}
+
+func (x *XUtils) Files() *files.Files {
+	return x.files
 }
