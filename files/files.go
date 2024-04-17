@@ -1,6 +1,7 @@
 package files
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 )
@@ -90,4 +91,110 @@ func (f *Files) DirSearch(rootDir, dirName string) ([]string, error) {
 	})
 
 	return dirsFound, err
+}
+
+// RemoveFile removes the file specified by filePath.
+func (f *Files) RemoveFile(filePath string) error {
+	return os.Remove(filePath)
+}
+
+// RemoveDir removes the directory specified by dirPath.
+func (f *Files) RemoveDir(dirPath string) error {
+	return os.RemoveAll(dirPath)
+}
+
+// CreateDir creates a new directory specified by dirPath.
+func (f *Files) CreateDir(dirPath string) error {
+	return os.Mkdir(dirPath, 0755)
+}
+
+// CreateDirAll creates a new directory specified by dirPath and all necessary parent directories.
+func (f *Files) CreateDirAll(dirPath string) error {
+	return os.MkdirAll(dirPath, 0755)
+}
+
+// RenameFile renames a file from oldPath to newPath.
+func (f *Files) RenameFile(oldPath, newPath string) error {
+	return os.Rename(oldPath, newPath)
+}
+
+// RenameDir renames a directory from oldPath to newPath.
+func (f *Files) CopyFile(src, dst string) error {
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	_, err = io.Copy(dstFile, srcFile)
+	return err
+}
+
+// CopyDir copies a directory from src to dst.
+func (f *Files) CopyDir(src, dst string) error {
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+
+		dstPath := filepath.Join(dst, relPath)
+		if info.IsDir() {
+			return os.Mkdir(dstPath, 0755)
+		}
+
+		return f.CopyFile(path, dstPath)
+	})
+}
+
+// MoveFile moves a file from src to dst.
+func (f *Files) MoveFile(src, dst string) error {
+	return os.Rename(src, dst)
+}
+
+// MoveDir moves a directory from src to dst.
+func (f *Files) MoveDir(src, dst string) error {
+	return os.Rename(src, dst)
+}
+
+// ReadDir reads and returns all the entries in a directory specified by dirPath.
+func (f *Files) ReadDir(dirPath string) ([]os.FileInfo, error) {
+	var files []os.FileInfo
+	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() { // Optionally check if you want to add directories to the list
+			files = append(files, info)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
+}
+
+// FileExists checks if a file exists.
+func (f *Files) FileExists(filePath string) bool {
+	_, err := os.Stat(filePath)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
+// RemoveAllDir removes all files and directories in a directory specified by dirPath.
+func (f *Files) RemoveAllDir(dirPath string) error {
+	return os.RemoveAll(dirPath)
 }

@@ -251,3 +251,346 @@ func TestDirSearch(t *testing.T) {
 		}
 	}
 }
+
+func TestRemoveFile(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testRemoveFile")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	testFile := filepath.Join(testDir, "testFile.txt")
+	if err := os.WriteFile(testFile, []byte("test"), 0644); err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	if err := fm.RemoveFile(testFile); err != nil {
+		t.Fatalf("Failed to remove file: %v", err)
+	}
+
+	if fm.IsFile(testFile) {
+		t.Errorf("File should have been removed: %s", testFile)
+	}
+}
+
+func TestRemoveDir(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testRemoveDir")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	testSubDir := filepath.Join(testDir, "subdir")
+	if err := os.Mkdir(testSubDir, 0755); err != nil {
+		t.Fatalf("Failed to create test subdir: %v", err)
+	}
+
+	if err := fm.RemoveDir(testSubDir); err != nil {
+		t.Fatalf("Failed to remove directory: %v", err)
+	}
+
+	if fm.IsDirectory(testSubDir) {
+		t.Errorf("Directory should have been removed: %s", testSubDir)
+	}
+}
+
+func TestCreateDir(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testCreateDir")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	newDir := filepath.Join(testDir, "newdir")
+	if err := fm.CreateDir(newDir); err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
+
+	if !fm.IsDirectory(newDir) {
+		t.Errorf("Directory should have been created: %s", newDir)
+	}
+}
+
+func TestCopyFile(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testCopyFile")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	srcFile := filepath.Join(testDir, "src.txt")
+	dstFile := filepath.Join(testDir, "dst.txt")
+	data := []byte("test data")
+	if err := os.WriteFile(srcFile, data, 0644); err != nil {
+		t.Fatalf("Failed to write source file: %v", err)
+	}
+
+	if err := fm.CopyFile(srcFile, dstFile); err != nil {
+		t.Fatalf("Failed to copy file: %v", err)
+	}
+
+	dstData, err := os.ReadFile(dstFile)
+	if err != nil {
+		t.Fatalf("Failed to read destination file: %v", err)
+	}
+
+	if string(dstData) != string(data) {
+		t.Errorf("Copied data does not match: %s", dstData)
+	}
+}
+
+func TestCopyDir(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testCopyDir")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	srcDir := filepath.Join(testDir, "src")
+	dstDir := filepath.Join(testDir, "dst")
+	if err := os.Mkdir(srcDir, 0755); err != nil {
+		t.Fatalf("Failed to create source directory: %v", err)
+	}
+
+	// Create a nested directory structure
+	nestedDir := filepath.Join(srcDir, "nested")
+	if err := os.Mkdir(nestedDir, 0755); err != nil {
+		t.Fatalf("Failed to create nested directory: %v", err)
+	}
+	nestedFile := filepath.Join(nestedDir, "nested.txt")
+	if err := os.WriteFile(nestedFile, []byte("nested data"), 0644); err != nil {
+		t.Fatalf("Failed to write nested file: %v", err)
+	}
+
+	if err := fm.CopyDir(srcDir, dstDir); err != nil {
+		t.Fatalf("Failed to copy directory: %v", err)
+	}
+
+	// Verify that the nested file was copied
+	dstNestedFile := filepath.Join(dstDir, "nested", "nested.txt")
+	dstData, err := os.ReadFile(dstNestedFile)
+	if err != nil {
+		t.Fatalf("Failed to read destination file: %v", err)
+	}
+
+	if string(dstData) != "nested data" {
+		t.Errorf("Copied data does not match: %s", dstData)
+	}
+}
+
+func TestMoveFile(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testMoveFile")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	srcFile := filepath.Join(testDir, "src.txt")
+	dstFile := filepath.Join(testDir, "dst.txt")
+	data := []byte("test data")
+	if err := os.WriteFile(srcFile, data, 0644); err != nil {
+		t.Fatalf("Failed to write source file: %v", err)
+	}
+
+	if err := fm.MoveFile(srcFile, dstFile); err != nil {
+		t.Fatalf("Failed to move file: %v", err)
+	}
+
+	if fm.IsFile(srcFile) {
+		t.Errorf("Source file should have been moved: %s", srcFile)
+	}
+
+	dstData, err := os.ReadFile(dstFile)
+	if err != nil {
+		t.Fatalf("Failed to read destination file: %v", err)
+	}
+
+	if string(dstData) != string(data) {
+		t.Errorf("Moved data does not match: %s", dstData)
+	}
+}
+
+func TestMoveDir(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testMoveDir")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	srcDir := filepath.Join(testDir, "src")
+	dstDir := filepath.Join(testDir, "dst")
+	if err := os.Mkdir(srcDir, 0755); err != nil {
+		t.Fatalf("Failed to create source directory: %v", err)
+	}
+
+	// Create a nested directory structure
+	nestedDir := filepath.Join(srcDir, "nested")
+	if err := os.Mkdir(nestedDir, 0755); err != nil {
+		t.Fatalf("Failed to create nested directory: %v", err)
+	}
+	nestedFile := filepath.Join(nestedDir, "nested.txt")
+	if err := os.WriteFile(nestedFile, []byte("nested data"), 0644); err != nil {
+		t.Fatalf("Failed to write nested file: %v", err)
+	}
+
+	if err := fm.MoveDir(srcDir, dstDir); err != nil {
+		t.Fatalf("Failed to move directory: %v", err)
+	}
+
+	if fm.IsDirectory(srcDir) {
+		t.Errorf("Source directory should have been moved: %s", srcDir)
+	}
+
+	// Verify that the nested file was moved
+	dstNestedFile := filepath.Join(dstDir, "nested", "nested.txt")
+	dstData, err := os.ReadFile(dstNestedFile)
+	if err != nil {
+		t.Fatalf("Failed to read destination file: %v", err)
+	}
+
+	if string(dstData) != "nested data" {
+		t.Errorf("Moved data does not match: %s", dstData)
+	}
+}
+
+func TestReadDir(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testReadDir")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	// Create a nested directory structure with files
+	nestedDir := filepath.Join(testDir, "nested")
+	if err := os.Mkdir(nestedDir, 0755); err != nil {
+		t.Fatalf("Failed to create nested dir: %v", err)
+	}
+	file1 := filepath.Join(testDir, "file1.txt")
+	if err := os.WriteFile(file1, []byte("content"), 0644); err != nil {
+		t.Fatalf("Failed to write file1: %v", err)
+	}
+
+	// Read the directory
+	files, err := fm.ReadDir(testDir)
+	if err != nil {
+		t.Fatalf("Failed to read directory: %v", err)
+	}
+
+	// Verify that only file1 is found and not files from nested directories
+	if len(files) != 1 {
+		t.Fatalf("Expected 1 file, found %d", len(files))
+	}
+
+	if files[0].Name() != "file1.txt" {
+		t.Errorf("Expected file1.txt to be found, but found %s", files[0].Name())
+	}
+}
+
+func TestCreateDirAll(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testCreateDirAll")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	newDir := filepath.Join(testDir, "newdir", "subdir")
+	if err := fm.CreateDirAll(newDir); err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
+
+	if !fm.IsDirectory(newDir) {
+		t.Errorf("Directory should have been created: %s", newDir)
+	}
+}
+
+func TestRenameFile(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testRenameFile")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	srcFile := filepath.Join(testDir, "src.txt")
+	dstFile := filepath.Join(testDir, "dst.txt")
+	data := []byte("test data")
+	if err := os.WriteFile(srcFile, data, 0644); err != nil {
+		t.Fatalf("Failed to write source file: %v", err)
+	}
+
+	if err := fm.RenameFile(srcFile, dstFile); err != nil {
+		t.Fatalf("Failed to rename file: %v", err)
+	}
+
+	if fm.IsFile(srcFile) {
+		t.Errorf("Source file should have been renamed: %s", srcFile)
+	}
+
+	dstData, err := os.ReadFile(dstFile)
+	if err != nil {
+		t.Fatalf("Failed to read destination file: %v", err)
+	}
+
+	if string(dstData) != string(data) {
+		t.Errorf("Renamed data does not match: %s", dstData)
+	}
+}
+
+func TestFileExists(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testFileExists")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	testFile := filepath.Join(testDir, "testFile.txt")
+	if err := os.WriteFile(testFile, []byte("test"), 0644); err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	if !fm.FileExists(testFile) {
+		t.Errorf("File should exist: %s", testFile)
+	}
+
+	nonExistentFile := filepath.Join(testDir, "nonexistent.txt")
+	if fm.FileExists(nonExistentFile) {
+		t.Errorf("File should not exist: %s", nonExistentFile)
+	}
+}
+
+func TestRemoveAllDir(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testRemoveAllDir")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	// Create a nested directory structure
+	nestedDir := filepath.Join(testDir, "nested")
+	if err := os.Mkdir(nestedDir, 0755); err != nil {
+		t.Fatalf("Failed to create nested dir: %v", err)
+	}
+	nestedFile := filepath.Join(nestedDir, "nested.txt")
+	if err := os.WriteFile(nestedFile, []byte("nested data"), 0644); err != nil {
+		t.Fatalf("Failed to write nested file: %v", err)
+	}
+
+	if err := fm.RemoveAllDir(testDir); err != nil {
+		t.Fatalf("Failed to remove directory: %v", err)
+	}
+
+	if fm.IsDirectory(testDir) {
+		t.Errorf("Directory should have been removed: %s", testDir)
+	}
+}
