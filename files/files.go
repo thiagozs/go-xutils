@@ -218,59 +218,19 @@ func (f *Files) ReadFileByLine(filePath string) ([]string, error) {
 	defer file.Close()
 
 	var lines []string
-
-	info, err := file.Stat()
-	if err != nil {
-		return nil, err
-	}
-
-	var maxSize int
-	scanner := bufio.NewScanner(file)
-	maxSize = int(info.Size())
-	buffer := make([]byte, 0, maxSize)
-	scanner.Buffer(buffer, maxSize)
-
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-
-	return lines, nil
-}
-
-func (f *Files) ReadFileByLineP(filePath string, param ...int) ([]string, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	var lines []string
-
-	p1 := 512
-	p2 := 1024
-
-	if len(param) == 0 {
-		param = append(param, p1, p2)
-	} else {
-		p1 = param[0]
-		p2 = param[1]
-	}
-
-	maxCapacity := p1 * p2
-	buf := make([]byte, maxCapacity)
-	scanner := bufio.NewScanner(file)
-	scanner.Buffer(buf, maxCapacity)
-
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, err
+	reader := bufio.NewReader(file)
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				if len(line) > 0 {
+					lines = append(lines, line)
+				}
+				break
+			}
+			return nil, err
+		}
+		lines = append(lines, line)
 	}
 
 	return lines, nil
