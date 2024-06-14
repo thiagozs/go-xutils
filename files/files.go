@@ -5,7 +5,26 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 )
+
+type Delimiter int
+
+// byte SLASH_N = 0x0A; //new line
+// byte EBCDIC_CR = 0x0D; //carriage return
+// byte EBCDIC_NL = 0x15; //next line
+// byte EBCDIC_LF = 0x25; //line feed
+
+const (
+	SLASH_N Delimiter = iota
+	EBCDIC_CP500_CR
+	EBCDIC_CP500_NL
+	EBCDIC_CP500_LF
+)
+
+func (d Delimiter) Value() byte {
+	return [...]byte{0x0A, 0x0D, 0x15, 0x25}[d]
+}
 
 type Files struct{}
 
@@ -200,37 +219,34 @@ func (f *Files) RemoveAllDir(dirPath string) error {
 	return os.RemoveAll(dirPath)
 }
 
-// ReadFile reads and returns the entire content of a file specified by filePath as a string.
-func (f *Files) ReadFile(filePath string) (string, error) {
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
-}
-
 // ReadFileByLine reads and returns the contents of a file specified by filePath line by line as a slice of strings.
-func (f *Files) ReadFileByLine(filePath string) ([]string, error) {
+func (f *Files) ReadFileLines(filePath string, opts ...Delimiter) ([]string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
+	if len(opts) == 0 {
+		opts = append(opts, SLASH_N)
+	}
+
 	var lines []string
 	reader := bufio.NewReader(file)
+	delimiter := opts[0].Value()
+
 	for {
-		line, err := reader.ReadString('\n')
+		line, err := reader.ReadString(delimiter)
 		if err != nil {
 			if err == io.EOF {
 				if len(line) > 0 {
-					lines = append(lines, line)
+					lines = append(lines, strings.TrimSuffix(line, string(delimiter)))
 				}
 				break
 			}
 			return nil, err
 		}
-		lines = append(lines, line)
+		lines = append(lines, strings.TrimSuffix(line, string(delimiter)))
 	}
 
 	return lines, nil
