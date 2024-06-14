@@ -218,7 +218,18 @@ func (f *Files) ReadFileByLine(filePath string) ([]string, error) {
 	defer file.Close()
 
 	var lines []string
+
+	info, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	var maxSize int
 	scanner := bufio.NewScanner(file)
+	maxSize = int(info.Size())
+	buffer := make([]byte, 0, maxSize)
+	scanner.Buffer(buffer, maxSize)
+
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
 	}
