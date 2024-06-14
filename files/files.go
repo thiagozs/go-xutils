@@ -198,3 +198,33 @@ func (f *Files) FileExists(filePath string) bool {
 func (f *Files) RemoveAllDir(dirPath string) error {
 	return os.RemoveAll(dirPath)
 }
+
+// ReadFile reads and returns the entire content of a file specified by filePath as a string.
+func (f *Files) ReadFile(filePath string) (string, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// ReadFileByLine reads and returns the contents of a file specified by filePath line by line as a slice of strings.
+func (f *Files) ReadFileByLine(filePath string) ([]string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return lines, nil
+}
