@@ -240,3 +240,38 @@ func (f *Files) ReadFileByLine(filePath string) ([]string, error) {
 
 	return lines, nil
 }
+
+func (f *Files) ReadFileByLineP(filePath string, param ...int) ([]string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var lines []string
+
+	p1 := 512
+	p2 := 1024
+
+	if len(param) == 0 {
+		param = append(param, p1, p2)
+	} else {
+		p1 = param[0]
+		p2 = param[1]
+	}
+
+	maxCapacity := p1 * p2
+	buf := make([]byte, maxCapacity)
+	scanner := bufio.NewScanner(file)
+	scanner.Buffer(buf, maxCapacity)
+
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return lines, nil
+}
