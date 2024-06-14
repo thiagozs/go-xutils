@@ -1,6 +1,7 @@
 package files
 
 import (
+	"bufio"
 	"io"
 	"os"
 	"path/filepath"
