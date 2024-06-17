@@ -2,6 +2,7 @@ package files
 
 import (
 	"bufio"
+	"bytes"
 	"io"
 	"os"
 	"path/filepath"
@@ -247,6 +248,38 @@ func (f *Files) ReadFileLines(filePath string, opts ...Delimiter) ([]string, err
 			return nil, err
 		}
 		lines = append(lines, strings.TrimSuffix(line, string(delimiter)))
+	}
+
+	return lines, nil
+}
+
+func (f *Files) ReadFileLinesBytes(filePath string, opts ...Delimiter) ([][]byte, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	if len(opts) == 0 {
+		opts = append(opts, SLASH_N)
+	}
+
+	var lines [][]byte
+	reader := bufio.NewReader(file)
+	delimiter := opts[0].Value()
+
+	for {
+		line, err := reader.ReadBytes(delimiter)
+		if err != nil {
+			if err == io.EOF {
+				if len(line) > 0 {
+					lines = append(lines, bytes.TrimSuffix(line, []byte{delimiter}))
+				}
+				break
+			}
+			return nil, err
+		}
+		lines = append(lines, bytes.TrimSuffix(line, []byte{delimiter}))
 	}
 
 	return lines, nil
