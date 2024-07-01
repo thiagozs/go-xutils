@@ -594,3 +594,248 @@ func TestRemoveAllDir(t *testing.T) {
 		t.Errorf("Directory should have been removed: %s", testDir)
 	}
 }
+
+func TestFileSize(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testFileSize")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	testFile := filepath.Join(testDir, "testFile.txt")
+	data := []byte("test data")
+	if err := os.WriteFile(testFile, data, 0644); err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	size, err := fm.FileSizeBytes(testFile)
+	if err != nil {
+		t.Fatalf("Failed to get file size: %v", err)
+	}
+
+	if size != int64(len(data)) {
+		t.Errorf("Expected file size: %d, got: %d", len(data), size)
+	}
+}
+
+func TestCompareSize(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testCompareSize")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	testFile1 := filepath.Join(testDir, "testFile1.txt")
+	data1 := []byte("test data")
+	if err := os.WriteFile(testFile1, data1, 0644); err != nil {
+		t.Fatalf("Failed to write test file1: %v", err)
+	}
+
+	testFile2 := filepath.Join(testDir, "testFile2.txt")
+	data2 := []byte("test data")
+	if err := os.WriteFile(testFile2, data2, 0644); err != nil {
+		t.Fatalf("Failed to write test file2: %v", err)
+	}
+
+	ok, err := fm.CompareSize(testFile1, testFile2)
+	if err != nil {
+		t.Fatalf("Failed to compare file sizes: %v", err)
+	}
+
+	if !ok {
+		t.Errorf("File sizes should match: %s, %s", testFile1, testFile2)
+	}
+
+}
+
+func TestReadFileLines(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testReadFileLines")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	testFile := filepath.Join(testDir, "testFile.txt")
+	data := []byte("line1\nline2\nline3")
+	if err := os.WriteFile(testFile, data, 0644); err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	lines, err := fm.ReadFileLines(testFile)
+	if err != nil {
+		t.Fatalf("Failed to read file lines: %v", err)
+	}
+
+	expectedLines := []string{"line1", "line2", "line3"}
+	if len(lines) != len(expectedLines) {
+		t.Fatalf("Expected %d lines, got %d", len(expectedLines), len(lines))
+	}
+
+	for i, line := range lines {
+		if line != expectedLines[i] {
+			t.Errorf("Expected line: %s, got: %s", expectedLines[i], line)
+		}
+	}
+
+}
+
+func TestReadFileLinesBytes(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testReadFileLinesBytes")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	testFile := filepath.Join(testDir, "testFile.txt")
+	data := []byte("line1\nline2\nline3")
+	if err := os.WriteFile(testFile, data, 0644); err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	lines, err := fm.ReadFileLinesBytes(testFile)
+	if err != nil {
+		t.Fatalf("Failed to read file lines: %v", err)
+	}
+
+	expectedLines := [][]byte{[]byte("line1"), []byte("line2"), []byte("line3")}
+	if len(lines) != len(expectedLines) {
+		t.Fatalf("Expected %d lines, got %d", len(expectedLines), len(lines))
+	}
+
+	for i, line := range lines {
+		if string(line) != string(expectedLines[i]) {
+			t.Errorf("Expected line: %s, got: %s", expectedLines[i], line)
+		}
+	}
+}
+
+func TestReadFileLinesDelimiter(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testReadFileLinesDelimiter")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	testFile := filepath.Join(testDir, "testFile.txt")
+	data := []byte("line1\nline2\nline3")
+	if err := os.WriteFile(testFile, data, 0644); err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	lines, err := fm.ReadFileLines(testFile, SLASH_N)
+	if err != nil {
+		t.Fatalf("Failed to read file lines: %v", err)
+	}
+
+	expectedLines := []string{"line1", "line2", "line3"}
+	if len(lines) != len(expectedLines) {
+		t.Fatalf("Expected %d lines, got %d", len(expectedLines), len(lines))
+	}
+
+	for i, line := range lines {
+		if line != expectedLines[i] {
+			t.Errorf("Expected line: %s, got: %s", expectedLines[i], line)
+		}
+	}
+}
+
+func TestFileSizeMB(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testFileSizeMB")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	testFile := filepath.Join(testDir, "testFile.txt")
+	data := []byte("test data")
+	if err := os.WriteFile(testFile, data, 0644); err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	size, err := fm.FileSizeMB(testFile)
+	if err != nil {
+		t.Fatalf("Failed to get file size: %v", err)
+	}
+
+	if size != 0 {
+		t.Errorf("Expected file size: 0 MB, got: %d MB", size)
+	}
+}
+
+func TestFileSizeGB(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testFileSizeGB")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	testFile := filepath.Join(testDir, "testFile.txt")
+	data := []byte("test data")
+	if err := os.WriteFile(testFile, data, 0644); err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	size, err := fm.FileSizeGB(testFile)
+	if err != nil {
+		t.Fatalf("Failed to get file size: %v", err)
+	}
+
+	if size != 0 {
+		t.Errorf("Expected file size: 0 GB, got: %d GB", size)
+	}
+}
+
+func TestFileSizeKB(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testFileSizeKB")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	testFile := filepath.Join(testDir, "testFile.txt")
+	data := []byte("test data")
+	if err := os.WriteFile(testFile, data, 0644); err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	size, err := fm.FileSizeKB(testFile)
+	if err != nil {
+		t.Fatalf("Failed to get file size: %v", err)
+	}
+
+	if size != 0 {
+		t.Errorf("Expected file size: 0 KB, got: %d KB", size)
+	}
+}
+
+func TestFileSizeTB(t *testing.T) {
+	fm := New()
+	testDir, err := os.MkdirTemp("", "testFileSizeTB")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	testFile := filepath.Join(testDir, "testFile.txt")
+	data := []byte("test data")
+	if err := os.WriteFile(testFile, data, 0644); err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	size, err := fm.FileSizeTB(testFile)
+	if err != nil {
+		t.Fatalf("Failed to get file size: %v", err)
+	}
+
+	if size != 0 {
+		t.Errorf("Expected file size: 0 TB, got: %d TB", size)
+	}
+}

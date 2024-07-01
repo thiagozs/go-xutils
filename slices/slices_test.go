@@ -194,7 +194,8 @@ func TestRemoveEDTS(t *testing.T) {
 		expected []string
 	}{
 		{[]string{"  duplicate ", "DUPLICATE", " unique "}, []string{"duplicate", "unique"}},
-		// Note: Adjust the expected results based on the actual implementation and behavior of RemoveEDTS method
+		{[]string{"", "  ", " "}, []string{}},
+		{[]string{"  ", "  ", " "}, []string{}},
 	}
 
 	for _, test := range tests {

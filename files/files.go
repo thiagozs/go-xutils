@@ -220,7 +220,7 @@ func (f *Files) RemoveAllDir(dirPath string) error {
 	return os.RemoveAll(dirPath)
 }
 
-// ReadFileByLine reads and returns the contents of a file specified by filePath line by line as a slice of strings.
+// ReadFileLines reads and returns the contents of a file specified by filePath line by line as a slice of strings.
 func (f *Files) ReadFileLines(filePath string, opts ...Delimiter) ([]string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -253,6 +253,7 @@ func (f *Files) ReadFileLines(filePath string, opts ...Delimiter) ([]string, err
 	return lines, nil
 }
 
+// ReadFileByLineBytes reads and returns the contents of a file specified by filePath line by line as a slice of byte slices.
 func (f *Files) ReadFileLinesBytes(filePath string, opts ...Delimiter) ([][]byte, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -283,4 +284,64 @@ func (f *Files) ReadFileLinesBytes(filePath string, opts ...Delimiter) ([][]byte
 	}
 
 	return lines, nil
+}
+
+// CompareSize compares the sizes of two files and returns true if they are equal.
+func (f *Files) CompareSize(file1, file2 string) (bool, error) {
+	info1, err := os.Stat(file1)
+	if err != nil {
+		return false, err
+	}
+
+	info2, err := os.Stat(file2)
+	if err != nil {
+		return false, err
+	}
+
+	return info1.Size() == info2.Size(), nil
+}
+
+// FileSizeBytes returns the size of a file in bytes.
+func (f *Files) FileSizeBytes(filePath string) (int64, error) {
+	info, err := os.Stat(filePath)
+	if err != nil {
+		return 0, err
+	}
+	return info.Size(), nil
+}
+
+// FileSizeKB returns the size of a file in kilobytes.
+func (f *Files) FileSizeKB(filePath string) (int64, error) {
+	info, err := os.Stat(filePath)
+	if err != nil {
+		return 0, err
+	}
+	return info.Size() / 1024, nil
+}
+
+// FileSizeMB returns the size of a file in megabytes.
+func (f *Files) FileSizeMB(filePath string) (int64, error) {
+	info, err := os.Stat(filePath)
+	if err != nil {
+		return 0, err
+	}
+	return info.Size() / 1024 / 1024, nil
+}
+
+// FileSizeGB returns the size of a file in gigabytes.
+func (f *Files) FileSizeGB(filePath string) (int64, error) {
+	info, err := os.Stat(filePath)
+	if err != nil {
+		return 0, err
+	}
+	return info.Size() / 1024 / 1024 / 1024, nil
+}
+
+// FileSizeTB returns the size of a file in terabytes.
+func (f *Files) FileSizeTB(filePath string) (int64, error) {
+	info, err := os.Stat(filePath)
+	if err != nil {
+		return 0, err
+	}
+	return info.Size() / 1024 / 1024 / 1024 / 1024, nil
 }

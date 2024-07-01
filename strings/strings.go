@@ -33,6 +33,11 @@ func (s *Strings) GenerateUniqueSlug(input string) string {
 	return slug
 }
 
+// ToCamelCase converts a string to camel case
+func (s *Strings) ToCamelCase(str string) string {
+	return s.toCamelCase(str)
+}
+
 func (s *Strings) toCamelCase(str string) string {
 	reg, _ := regexp.Compile("[^a-zA-Z0-9]+")
 	processedString := reg.ReplaceAllString(str, " ")
@@ -50,9 +55,9 @@ func (s *Strings) toCamelCase(str string) string {
 	return strings.Join(words, "")
 }
 
-// ToCamelCase converts a string to camel case
-func (s *Strings) ToCamelCase(str string) string {
-	return s.toCamelCase(str)
+// ToSnakeCase converts a string to snake case
+func (s *Strings) ToSnakeCase(str string) string {
+	return s.toSnakeCase(str)
 }
 
 func (s *Strings) toSnakeCase(str string) string {
@@ -61,11 +66,6 @@ func (s *Strings) toSnakeCase(str string) string {
 	str = regexp.MustCompile("([a-z0-9])([A-Z])").ReplaceAllString(str, "${1}_${2}")
 
 	return strings.ToLower(str)
-}
-
-// ToSnakeCase converts a string to snake case
-func (s *Strings) ToSnakeCase(str string) string {
-	return s.toSnakeCase(str)
 }
 
 // RemoveSpecialChars removes special chars
@@ -159,6 +159,7 @@ func (s *Strings) RandomStrE(length int) string {
 	for i := range b {
 		b[i] = charset[seededRand.Intn(len(charset))]
 	}
+
 	return string(b)
 }
 
@@ -170,5 +171,6 @@ func (s *Strings) RandomStr(length int) string {
 		str = re.ReplaceAllString(str, "")
 		result += str
 	}
+
 	return result[:length]
 }
