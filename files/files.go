@@ -226,10 +226,7 @@ func (f *Files) ReadDir(dirPath string) ([]os.FileInfo, error) {
 // FileExists checks if a file exists.
 func (f *Files) FileExists(filePath string) bool {
 	_, err := os.Stat(filePath)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return true
+	return !os.IsNotExist(err)
 }
 
 // RemoveAllDir removes all files and directories in a directory specified by dirPath.

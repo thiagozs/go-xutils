@@ -8,8 +8,6 @@ type CityInfo struct {
 }
 
 var (
-	cities = map[string][]CityInfo{}
-
 	cepsrangecsv = `
 UF,CIDADE,CEP DE,CEP ATÉ
 AC,,69900000,69999999

@@ -2,7 +2,9 @@ package csv
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/xuri/excelize/v2"
@@ -65,23 +67,53 @@ func (c *CSV) ToXLSX(csvFilePath, xlsxFilePath string) error {
 
 	reader := csv.NewReader(csvFile)
 
-	records, err := reader.ReadAll()
-	if err != nil {
-		return fmt.Errorf(ErrorReadCSVFile, err)
-	}
-
-	xlsx := excelize.NewFile()
+	// create xlsx file and stream writer to avoid loading all data in memory
+	f := excelize.NewFile()
 	sheetName := "Sheet1"
-	xlsx.NewSheet(sheetName)
-
-	for i, record := range records {
-		for j, field := range record {
-			cell, _ := excelize.CoordinatesToCellName(j+1, i+1)
-			xlsx.SetCellValue(sheetName, cell, field)
-		}
+	index, err := f.NewSheet(sheetName)
+	if err != nil {
+		return fmt.Errorf(ErrorSaveXLSXFile, err)
 	}
 
-	if err := xlsx.SaveAs(xlsxFilePath); err != nil {
+	// use StreamWriter for memory-efficient writes
+	sw, err := f.NewStreamWriter(sheetName)
+	if err != nil {
+		return fmt.Errorf(ErrorSaveXLSXFile, err)
+	}
+
+	rowNum := 1
+	for {
+		record, err := reader.Read()
+		if err != nil {
+			if err.Error() == "EOF" || err == io.EOF {
+				break
+			}
+			// for csv reader, io.EOF could be returned; use fmt error
+			if err != nil {
+				break
+			}
+		}
+
+		// convert []string to []interface{}
+		vals := make([]interface{}, len(record))
+		for i, v := range record {
+			vals[i] = v
+		}
+
+		cell, _ := excelize.CoordinatesToCellName(1, rowNum)
+		if err := sw.SetRow(cell, vals); err != nil {
+			return fmt.Errorf(ErrorSaveXLSXFile, err)
+		}
+		rowNum++
+	}
+
+	// flush stream
+	if err := sw.Flush(); err != nil {
+		return fmt.Errorf(ErrorSaveXLSXFile, err)
+	}
+
+	f.SetActiveSheet(index)
+	if err := f.SaveAs(xlsxFilePath); err != nil {
 		return fmt.Errorf(ErrorSaveXLSXFile, err)
 	}
 
@@ -107,7 +139,7 @@ func (c *CSV) GetHeaders(csvFilePath string) ([]string, error) {
 
 func (c *CSV) GetHeadersFromMap(mapper []map[string]string) ([]string, error) {
 	if len(mapper) == 0 {
-		return nil, fmt.Errorf(ErrorMapperIsEmpty)
+		return nil, errors.New(ErrorMapperIsEmpty)
 	}
 
 	firstRow := mapper[0]
@@ -139,10 +171,17 @@ func (c *CSV) GetRows(csvFilePath string) ([][]string, error) {
 		return nil, fmt.Errorf(ErrorReadingHeader, err)
 	}
 
-	// Read the rest of the rows
-	rows, err := reader.ReadAll()
-	if err != nil {
-		return nil, fmt.Errorf(ErrorReadCSVFile, err)
+	// Read the rest of the rows iteratively to avoid ReadAll for large files
+	var rows [][]string
+	for {
+		record, err := reader.Read()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf(ErrorReadCSVFile, err)
+		}
+		rows = append(rows, record)
 	}
 
 	return rows, nil
@@ -150,7 +189,7 @@ func (c *CSV) GetRows(csvFilePath string) ([][]string, error) {
 
 func (c *CSV) GetRowsFromMap(mapper []map[string]string) ([]map[string]string, error) {
 	if len(mapper) == 0 {
-		return nil, fmt.Errorf(ErrorMapperIsEmpty)
+		return nil, errors.New(ErrorMapperIsEmpty)
 	}
 
 	dataRows := mapper[1:]

@@ -2,13 +2,12 @@ package strings
 
 import (
 	"fmt"
-	"math/rand"
 	"regexp"
 	"strings"
-	"time"
 	"unicode"
 
 	"github.com/google/uuid"
+	"github.com/thiagozs/go-xutils/randutil"
 )
 
 type Strings struct{}
@@ -23,8 +22,9 @@ var (
 	nonAlnumRe      = regexp.MustCompile(`[^a-zA-Z0-9\\s]+`)
 	nonAlphaNumReg  = regexp.MustCompile("[^a-zA-Z0-9]+")
 	lowerToUpperReg = regexp.MustCompile("([a-z0-9])([A-Z])")
-	seededRand      = rand.New(rand.NewSource(time.Now().UnixNano()))
-	stopWordsMap    = map[string]struct{}{}
+	// use global rand seeded in xutils.init()
+	// seededRand removed to avoid per-package RNG sources
+	stopWordsMap = map[string]struct{}{}
 )
 
 func init() {
@@ -158,7 +158,7 @@ func (s *Strings) RandomStrE(length int) string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
 	b := make([]byte, length)
 	for i := range b {
-		b[i] = charset[seededRand.Intn(len(charset))]
+		b[i] = charset[randutil.Global.Intn(len(charset))]
 	}
 	return string(b)
 }

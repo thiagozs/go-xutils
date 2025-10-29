@@ -1,9 +1,11 @@
 package cpf
 
 import (
-	"math/rand"
 	"regexp"
 	"strconv"
+	"strings"
+
+	"github.com/thiagozs/go-xutils/randutil"
 )
 
 type CPF struct{}
@@ -17,7 +19,7 @@ func (c *CPF) Generate() string {
 	// Generate the first 9 random digits of the CPF
 	numbers := make([]int, 9)
 	for i := range numbers {
-		numbers[i] = rand.Intn(10)
+		numbers[i] = randutil.Global.Intn(10)
 	}
 
 	// Calculate the first check digit
@@ -26,13 +28,12 @@ func (c *CPF) Generate() string {
 	// Calculate the second check digit
 	numbers = append(numbers, calculateCheckDigit(numbers, 11))
 
-	// Convert the CPF numbers to a string
-	var cpf string
+	// Convert the CPF numbers to a string using strings.Builder
+	var b strings.Builder
 	for _, number := range numbers {
-		cpf += strconv.Itoa(number)
+		b.WriteString(strconv.Itoa(number))
 	}
-
-	return cpf
+	return b.String()
 }
 
 // IsValidCPF validates if the provided CPF is valid
@@ -63,19 +64,11 @@ func (c *CPF) IsValid(cpf string) bool {
 		numbers[i] = num
 	}
 
-	// Validate the first check digit
-	expectedFirstCheckDigit := calculateCheckDigit(numbers[:9], 10)
-	if expectedFirstCheckDigit != numbers[9] {
+	// Validate the first and second check digits
+	if calculateCheckDigit(numbers[:9], 10) != numbers[9] {
 		return false
 	}
-
-	// Validate the second check digit
-	expectedSecondCheckDigit := calculateCheckDigit(numbers[:10], 11)
-	if expectedSecondCheckDigit != numbers[10] {
-		return false
-	}
-
-	return true
+	return calculateCheckDigit(numbers[:10], 11) == numbers[10]
 }
 
 func calculateCheckDigit(numbers []int, length int) int {
@@ -93,6 +86,7 @@ func calculateCheckDigit(numbers []int, length int) int {
 
 // TrimCPF trims CPF
 func (c *CPF) TrimCPF(cpf string) string {
-	cpf = regexp.MustCompile(`\D`).ReplaceAllString(cpf, "")
-	return cpf
+	return reNonDigits.ReplaceAllString(cpf, "")
 }
+
+var reNonDigits = regexp.MustCompile(`\D`)

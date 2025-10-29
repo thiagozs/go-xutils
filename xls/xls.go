@@ -2,7 +2,9 @@ package xls
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/xuri/excelize/v2"
@@ -28,21 +30,31 @@ func (x *XLS) ParseToMap(filePath string) ([]map[string]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf(ErrorOpeningXLSXFile, err)
 	}
-
 	defer f.Close()
 
-	rows, err := f.GetRows(f.GetSheetList()[0])
-	if err != nil {
-		return nil, fmt.Errorf("error getting rows from xlsx file: %w", err)
+	sheetList := f.GetSheetList()
+	if len(sheetList) == 0 {
+		return nil, nil
 	}
+	sheet := sheetList[0]
+
+	rowsIter, err := f.Rows(sheet)
+	if err != nil {
+		return nil, fmt.Errorf(ErrorGetingRows, err)
+	}
+	defer rowsIter.Close()
 
 	var records []map[string]string
-	for _, row := range rows {
+	for rowsIter.Next() {
+		row, err := rowsIter.Columns()
+		if err != nil {
+			return nil, fmt.Errorf(ErrorGetingRows, err)
+		}
+
 		record := make(map[string]string)
 		for i, cell := range row {
 			record[fmt.Sprintf("col%d", i)] = cell
 		}
-
 		records = append(records, record)
 	}
 
@@ -56,10 +68,17 @@ func (x *XLS) ToCSV(xlsxPath, csvPath string) error {
 	}
 	defer f.Close()
 
-	rows, err := f.GetRows(f.GetSheetList()[0])
+	sheetList := f.GetSheetList()
+	if len(sheetList) == 0 {
+		return nil
+	}
+	sheet := sheetList[0]
+
+	rowsIter, err := f.Rows(sheet)
 	if err != nil {
 		return fmt.Errorf(ErrorGetingRows, err)
 	}
+	defer rowsIter.Close()
 
 	csvFile, err := os.Create(csvPath)
 	if err != nil {
@@ -70,7 +89,11 @@ func (x *XLS) ToCSV(xlsxPath, csvPath string) error {
 	writer := csv.NewWriter(csvFile)
 	defer writer.Flush()
 
-	for _, row := range rows {
+	for rowsIter.Next() {
+		row, err := rowsIter.Columns()
+		if err != nil {
+			return fmt.Errorf(ErrorGetingRows, err)
+		}
 		if err := writer.Write(row); err != nil {
 			return fmt.Errorf(ErrorWritingRowToCSVFile, err)
 		}
@@ -81,7 +104,7 @@ func (x *XLS) ToCSV(xlsxPath, csvPath string) error {
 
 func (x *XLS) GetHeadersFromMap(mapper []map[string]string) ([]string, error) {
 	if len(mapper) == 0 {
-		return nil, fmt.Errorf(ErrorMapperIsEmpty)
+		return nil, errors.New(ErrorMapperIsEmpty)
 	}
 
 	firstRow := mapper[0]
@@ -106,17 +129,32 @@ func (x *XLS) GetHeaders(xlsxPath string) ([]string, error) {
 	}
 	defer f.Close()
 
-	rows, err := f.GetRows(f.GetSheetList()[0])
+	sheetList := f.GetSheetList()
+	if len(sheetList) == 0 {
+		return nil, nil
+	}
+	sheet := sheetList[0]
+
+	rowsIter, err := f.Rows(sheet)
+	if err != nil {
+		return nil, fmt.Errorf(ErrorGetingRows, err)
+	}
+	defer rowsIter.Close()
+
+	if !rowsIter.Next() {
+		return nil, fmt.Errorf(ErrorGetingRows, io.EOF)
+	}
+	row, err := rowsIter.Columns()
 	if err != nil {
 		return nil, fmt.Errorf(ErrorGetingRows, err)
 	}
 
-	return rows[0], nil
+	return row, nil
 }
 
 func (x *XLS) GetRowsFromMap(mapper []map[string]string) ([]map[string]string, error) {
 	if len(mapper) <= 1 {
-		return nil, fmt.Errorf(ErrorMapperIsEmpty)
+		return nil, errors.New(ErrorMapperIsEmpty)
 	}
 
 	var rowsWithoutHeaders []map[string]string
@@ -139,9 +177,25 @@ func (x *XLS) GetRows(xlsxPath string) ([][]string, error) {
 	}
 	defer f.Close()
 
-	rows, err := f.GetRows(f.GetSheetList()[0])
+	sheetList := f.GetSheetList()
+	if len(sheetList) == 0 {
+		return nil, nil
+	}
+	sheet := sheetList[0]
+
+	rowsIter, err := f.Rows(sheet)
 	if err != nil {
 		return nil, fmt.Errorf(ErrorGetingRows, err)
+	}
+	defer rowsIter.Close()
+
+	var rows [][]string
+	for rowsIter.Next() {
+		row, err := rowsIter.Columns()
+		if err != nil {
+			return nil, fmt.Errorf(ErrorGetingRows, err)
+		}
+		rows = append(rows, row)
 	}
 
 	return rows, nil

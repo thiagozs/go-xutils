@@ -1,9 +1,11 @@
 package cnpj
 
 import (
-	"math/rand"
 	"regexp"
 	"strconv"
+	"strings"
+
+	"github.com/thiagozs/go-xutils/randutil"
 )
 
 type CNPJ struct{}
@@ -17,7 +19,7 @@ func (c *CNPJ) Generate() string {
 	// Generate the first 12 random digits of the CNPJ
 	numbers := make([]int, 12)
 	for i := range numbers {
-		numbers[i] = rand.Intn(10)
+		numbers[i] = randutil.Global.Intn(10)
 	}
 
 	// Calculate the first check digit
@@ -26,13 +28,12 @@ func (c *CNPJ) Generate() string {
 	// Calculate the second check digit
 	numbers = append(numbers, c.calculateCheckDigit(numbers))
 
-	// Convert the CNPJ numbers to a string
-	var cnpj string
+	// Convert the CNPJ numbers to a string using strings.Builder
+	var b strings.Builder
 	for _, number := range numbers {
-		cnpj += strconv.Itoa(number)
+		b.WriteString(strconv.Itoa(number))
 	}
-
-	return cnpj
+	return b.String()
 }
 
 func (c *CNPJ) calculateCheckDigit(numbers []int) int {
@@ -80,23 +81,16 @@ func (c *CNPJ) IsValid(cnpj string) bool {
 		numbers[i] = num
 	}
 
-	// Validate the first check digit
-	expectedFirstCheckDigit := c.calculateCheckDigit(numbers[:12])
-	if expectedFirstCheckDigit != numbers[12] {
+	// Validate the first and second check digits
+	if c.calculateCheckDigit(numbers[:12]) != numbers[12] {
 		return false
 	}
-
-	// Validate the second check digit
-	expectedSecondCheckDigit := c.calculateCheckDigit(numbers[:13])
-	if expectedSecondCheckDigit != numbers[13] {
-		return false
-	}
-
-	return true
+	return c.calculateCheckDigit(numbers[:13]) == numbers[13]
 }
 
 // TrimCNPJ trims CNPJ
 func (c *CNPJ) TrimCNPJ(cnpj string) string {
-	cnpj = regexp.MustCompile(`\D`).ReplaceAllString(cnpj, "")
-	return cnpj
+	return reNonDigits.ReplaceAllString(cnpj, "")
 }
+
+var reNonDigits = regexp.MustCompile(`\D`)
