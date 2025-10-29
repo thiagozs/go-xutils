@@ -4,7 +4,6 @@ import (
 	"math/rand"
 	"regexp"
 	"strconv"
-	"time"
 )
 
 type CNPJ struct{}
@@ -15,13 +14,10 @@ func New() *CNPJ {
 
 // GenerateCNPJ generates a random CNPJ
 func (c *CNPJ) Generate() string {
-	src := rand.NewSource(time.Now().UnixNano())
-	r := rand.New(src)
-
 	// Generate the first 12 random digits of the CNPJ
 	numbers := make([]int, 12)
 	for i := range numbers {
-		numbers[i] = r.Intn(10)
+		numbers[i] = rand.Intn(10)
 	}
 
 	// Calculate the first check digit
