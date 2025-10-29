@@ -55,3 +55,28 @@ Os workflows de CI foram atualizados para usar a versão do Go alinhada ao repos
 - `.github/workflows/ci.yml` — alinhado para execução de testes e (anteriormente) linter
 
 Data da atualização: 29/10/2025
+
+Comparação before / after (baseline = `origin/main`, after = this branch)
+---------------------------------------------------------------
+Nota: benchs são ruidosos — rode em CI para comparação reprodutível. Valores abaixo são de execuções locais nesta máquina (Intel i7-1255U).
+
+Strings
+| Benchmark | baseline (origin/main) | this branch | delta |
+|---|---:|---:|---:|
+| GenerateUniqueSlug-12 | 2471 ns/op | 2657 ns/op | +7.5% |
+| RemoveStopWords-12 | 1325 ns/op | 1725 ns/op | +30.2% |
+| RandomStr-12 | 3108 ns/op | 3113 ns/op | +0.2% |
+
+Files
+| Benchmark | baseline (origin/main) | this branch | delta |
+|---|---:|---:|---:|
+| ReadFileLines-12 | 65307 ns/op | 84270 ns/op | +29.0% |
+| ReadFileLinesBytes-12 | 71017 ns/op | 76306 ns/op | +7.4% |
+
+Interpretação rápida
+- Strings: mudanças de alocação são similares; alguns benches ficaram um pouco mais lentos (variação pequena para RandomStr). A diferença em RemoveStopWords pode indicar overhead do novo fluxo — preciso investigar se houve alocação extra ou mudança na lógica.
+- Files: ReadFileLines ficou mais lento nesta máquina; isso pode ser ruído (diferenças de I/O) ou efeito da mudança de leitura/dir/stream — recomendo rodar benchs no CI com artefatos controlados.
+
+Recomendação
+- Executar os benchs na pipeline (runner dedicado) para uma comparação reprodutível.
+- Se quiser, eu executo: checkout do commit-base (main pré-refactor), benchs automatizados, e anexarei um artefato com os resultados ao PR.
