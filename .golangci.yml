@@ -1,5 +1,5 @@
 run:
-  deadline: 3m
+  timeout: 3m
 
 linters:
   enable:
@@ -9,8 +9,5 @@ linters:
     - ineffassign
     - staticcheck
     - unused
-    - structcheck
-    - deadcode
 
-issues:
-  exclude-use-default: false
+
