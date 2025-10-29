@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 type CNPJ struct{}
@@ -26,13 +27,12 @@ func (c *CNPJ) Generate() string {
 	// Calculate the second check digit
 	numbers = append(numbers, c.calculateCheckDigit(numbers))
 
-	// Convert the CNPJ numbers to a string
-	var cnpj string
+	// Convert the CNPJ numbers to a string using strings.Builder
+	var b strings.Builder
 	for _, number := range numbers {
-		cnpj += strconv.Itoa(number)
+		b.WriteString(strconv.Itoa(number))
 	}
-
-	return cnpj
+	return b.String()
 }
 
 func (c *CNPJ) calculateCheckDigit(numbers []int) int {
@@ -97,6 +97,7 @@ func (c *CNPJ) IsValid(cnpj string) bool {
 
 // TrimCNPJ trims CNPJ
 func (c *CNPJ) TrimCNPJ(cnpj string) string {
-	cnpj = regexp.MustCompile(`\D`).ReplaceAllString(cnpj, "")
-	return cnpj
+	return reNonDigits.ReplaceAllString(cnpj, "")
 }
+
+var reNonDigits = regexp.MustCompile(`\D`)

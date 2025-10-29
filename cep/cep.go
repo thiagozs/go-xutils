@@ -27,8 +27,7 @@ func (c *CEP) Trim(cep string) string {
 // IsValid checks if a CEP is valid
 func (c *CEP) IsValid(cep string) bool {
 	cep = c.Trim(cep)
-	re := regexp.MustCompile(`^\d{8}$`)
-	return re.MatchString(cep)
+	return reCEP.MatchString(cep)
 }
 
 // Format formats a CEP
@@ -67,6 +66,10 @@ func (c *CEP) Generate() string {
 // Normalize normalizes a CEP
 func (c *CEP) Normalize(cep string) string {
 	cep = c.Trim(cep)
-	re := regexp.MustCompile(`\D`)
-	return re.ReplaceAllString(cep, "")
+	return reNonDigits.ReplaceAllString(cep, "")
 }
+
+var (
+	reCEP       = regexp.MustCompile(`^\d{8}$`)
+	reNonDigits = regexp.MustCompile(`\D`)
+)

@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 type CPF struct{}
@@ -26,13 +27,12 @@ func (c *CPF) Generate() string {
 	// Calculate the second check digit
 	numbers = append(numbers, calculateCheckDigit(numbers, 11))
 
-	// Convert the CPF numbers to a string
-	var cpf string
+	// Convert the CPF numbers to a string using strings.Builder
+	var b strings.Builder
 	for _, number := range numbers {
-		cpf += strconv.Itoa(number)
+		b.WriteString(strconv.Itoa(number))
 	}
-
-	return cpf
+	return b.String()
 }
 
 // IsValidCPF validates if the provided CPF is valid
@@ -93,6 +93,7 @@ func calculateCheckDigit(numbers []int, length int) int {
 
 // TrimCPF trims CPF
 func (c *CPF) TrimCPF(cpf string) string {
-	cpf = regexp.MustCompile(`\D`).ReplaceAllString(cpf, "")
-	return cpf
+	return reNonDigits.ReplaceAllString(cpf, "")
 }
+
+var reNonDigits = regexp.MustCompile(`\D`)
