@@ -324,7 +324,9 @@ func BenchmarkNormalize(b *testing.B) {
 	p := New()
 
 	for i := 0; i < b.N; i++ {
-		p.Normalize("+55 11 98765-4321", "BR")
+		if _, err := p.Normalize("+55 11 98765-4321", "BR"); err != nil {
+			b.Fatalf("Normalize returned error: %v", err)
+		}
 	}
 }
 

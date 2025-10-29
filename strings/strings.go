@@ -2,12 +2,12 @@ package strings
 
 import (
 	"fmt"
-	"math/rand"
 	"regexp"
 	"strings"
 	"unicode"
 
 	"github.com/google/uuid"
+	"github.com/thiagozs/go-xutils/randutil"
 )
 
 type Strings struct{}
@@ -158,7 +158,7 @@ func (s *Strings) RandomStrE(length int) string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
 	b := make([]byte, length)
 	for i := range b {
-		b[i] = charset[rand.Intn(len(charset))]
+		b[i] = charset[randutil.Global.Intn(len(charset))]
 	}
 	return string(b)
 }

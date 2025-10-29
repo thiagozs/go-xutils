@@ -2,8 +2,9 @@ package calc
 
 import (
 	"fmt"
-	"math/rand"
 	"strconv"
+
+	"github.com/thiagozs/go-xutils/randutil"
 )
 
 type Calc struct{}
@@ -43,7 +44,7 @@ func RandomInRange[T Convertible](min, max T) (int32, error) {
 		return 0, fmt.Errorf("calc: min must be less than max")
 	}
 
-	return minInt + rand.Int31n(maxInt-minInt+1), nil
+	return minInt + randutil.Global.Int31n(maxInt-minInt+1), nil
 }
 
 func CalculateLimitAndOffset[T Convertible](pageNumber, pageSize T) (int32, int32, error) {

@@ -2,11 +2,12 @@ package cep
 
 import (
 	"encoding/csv"
-	"math/rand"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/thiagozs/go-xutils/convs"
+	"github.com/thiagozs/go-xutils/randutil"
 )
 
 type CEP struct {
@@ -38,18 +39,18 @@ func (c *CEP) Format(cep string) string {
 
 // Generate generates a random CEP
 func (c *CEP) Generate() string {
-	rec, err := csv.NewReader(strings.NewReader(cepsrangecsv)).ReadAll()
-	if err != nil {
+	rec, err := loadCepRecords()
+	if err != nil || len(rec) == 0 {
 		return ""
 	}
 
-	cepRand := rec[rand.Intn(len(rec))]
+	cepRand := rec[randutil.Global.Intn(len(rec))]
 
 	randomInRange := func(start, end int) int {
 		if start >= end {
 			return start
 		}
-		return start + rand.Intn(end-start+1)
+		return start + randutil.Global.Intn(end-start+1)
 	}
 
 	cep1, _ := c.conv.ToInt(cepRand[2])
@@ -67,6 +68,20 @@ func (c *CEP) Generate() string {
 func (c *CEP) Normalize(cep string) string {
 	cep = c.Trim(cep)
 	return reNonDigits.ReplaceAllString(cep, "")
+}
+
+var (
+	cepRecords [][]string
+	cepOnce    sync.Once
+	cepLoadErr error
+)
+
+func loadCepRecords() ([][]string, error) {
+	cepOnce.Do(func() {
+		r := csv.NewReader(strings.NewReader(cepsrangecsv))
+		cepRecords, cepLoadErr = r.ReadAll()
+	})
+	return cepRecords, cepLoadErr
 }
 
 var (
