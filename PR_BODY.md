@@ -14,16 +14,16 @@ Principais mudanças
 
 Benchmarks (resultado desta sessão)
 ----------------------------------
-Comando usado: `go test ./... -bench . -benchmem`
+Comando usado: `go test -bench . -benchmem ./strings ./files`
 
-Files
-- BenchmarkReadFileLines: ~10.8 µs/op, 214 KiB/op, 37 allocs/op
-- BenchmarkReadFileLinesBytes: ~11.0 µs/op, 214 KiB/op, 37 allocs/op
+Strings (machine: 12th Gen Intel(R) Core(TM) i7-1255U)
+- BenchmarkGenerateUniqueSlug-12: 2779 ns/op, 411 B/op, 12 allocs/op
+- BenchmarkRemoveStopWords-12: 1473 ns/op, 888 B/op, 6 allocs/op
+- BenchmarkRandomStr-12: 3113 ns/op, 337 B/op, 12 allocs/op
 
-Strings
-- BenchmarkGenerateUniqueSlug: ~3.9–4.2 µs/op, 411 B/op, 12 allocs/op
-- BenchmarkRemoveStopWords: ~1.9–2.5 µs/op, 888 B/op, 6 allocs/op
-- BenchmarkRandomStr: ~4.3–4.8 µs/op, 337 B/op, 12 allocs/op
+Files (machine: 12th Gen Intel(R) Core(TM) i7-1255U)
+- BenchmarkReadFileLines-12: 68348 ns/op, 214817 B/op, 37 allocs/op
+- BenchmarkReadFileLinesBytes-12: 69141 ns/op, 214824 B/op, 37 allocs/op
 
 Notas
 - Os números variam conforme a máquina e carga. Se quiser comparação before/after, posso gerar benchs no commit anterior e anexar à PR.
