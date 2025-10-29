@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
-	"time"
 )
 
 type Calc struct{}
@@ -44,10 +43,7 @@ func RandomInRange[T Convertible](min, max T) (int32, error) {
 		return 0, fmt.Errorf("calc: min must be less than max")
 	}
 
-	src := rand.NewSource(time.Now().UnixNano())
-	r := rand.New(src)
-
-	return minInt + r.Int31n(maxInt-minInt+1), nil
+	return minInt + rand.Int31n(maxInt-minInt+1), nil
 }
 
 func CalculateLimitAndOffset[T Convertible](pageNumber, pageSize T) (int32, int32, error) {

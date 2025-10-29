@@ -4,7 +4,6 @@ import (
 	"math/rand"
 	"regexp"
 	"strconv"
-	"time"
 )
 
 type CPF struct{}
@@ -15,13 +14,10 @@ func New() *CPF {
 
 // GenerateCPF generates a valid CPF number
 func (c *CPF) Generate() string {
-	src := rand.NewSource(time.Now().UnixNano())
-	r := rand.New(src)
-
 	// Generate the first 9 random digits of the CPF
 	numbers := make([]int, 9)
 	for i := range numbers {
-		numbers[i] = r.Intn(10)
+		numbers[i] = rand.Intn(10)
 	}
 
 	// Calculate the first check digit

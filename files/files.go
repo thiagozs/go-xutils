@@ -59,7 +59,8 @@ func (f *Files) AppendFile(filePath string, data []byte) error {
 func (f *Files) DirectoryExist(dirPath string) bool {
 	info, err := os.Stat(dirPath)
 	if err != nil {
-		return os.IsExist(err)
+		// if there's any error (including not exists), return false
+		return false
 	}
 	return info.IsDir()
 }
@@ -190,20 +191,36 @@ func (f *Files) MoveDir(src, dst string) error {
 
 // ReadDir reads and returns all the entries in a directory specified by dirPath.
 func (f *Files) ReadDir(dirPath string) ([]os.FileInfo, error) {
-	var files []os.FileInfo
-	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+	var filesInfo []os.FileInfo
+
+	// use os.ReadDir for slightly better performance and clarity
+	var walk func(string) error
+	walk = func(p string) error {
+		entries, err := os.ReadDir(p)
 		if err != nil {
 			return err
 		}
-		if !info.IsDir() { // Optionally check if you want to add directories to the list
-			files = append(files, info)
+		for _, e := range entries {
+			fullPath := filepath.Join(p, e.Name())
+			if e.IsDir() {
+				if err := walk(fullPath); err != nil {
+					return err
+				}
+				continue
+			}
+			info, err := e.Info()
+			if err != nil {
+				return err
+			}
+			filesInfo = append(filesInfo, info)
 		}
 		return nil
-	})
-	if err != nil {
+	}
+
+	if err := walk(dirPath); err != nil {
 		return nil, err
 	}
-	return files, nil
+	return filesInfo, nil
 }
 
 // FileExists checks if a file exists.

@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/thiagozs/go-xutils/convs"
 )
@@ -45,16 +44,13 @@ func (c *CEP) Generate() string {
 		return ""
 	}
 
-	src := rand.NewSource(time.Now().UnixNano())
-	r := rand.New(src)
-
-	cepRand := rec[r.Intn(len(rec))]
+	cepRand := rec[rand.Intn(len(rec))]
 
 	randomInRange := func(start, end int) int {
 		if start >= end {
 			return start
 		}
-		return start + r.Intn(end-start+1)
+		return start + rand.Intn(end-start+1)
 	}
 
 	cep1, _ := c.conv.ToInt(cepRand[2])

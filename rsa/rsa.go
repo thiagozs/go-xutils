@@ -68,7 +68,10 @@ func (pri *RSAPrivateKey) Decrypt(decryptStr string) (string, error) {
 		return "", err
 	}
 
-	decrypted, _ := rsa.DecryptPKCS1v15(rand.Reader, privateKey, decryptBytes)
+	decrypted, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, decryptBytes)
+	if err != nil {
+		return "", err
+	}
 
 	return string(decrypted), nil
 }

@@ -17,12 +17,27 @@ func New() *Strings {
 	return &Strings{}
 }
 
+var (
+	// precompiled regexes to avoid repeated compilation
+	slugReg         = regexp.MustCompile("[^a-z0-9]+")
+	nonAlnumRe      = regexp.MustCompile(`[^a-zA-Z0-9\\s]+`)
+	nonAlphaNumReg  = regexp.MustCompile("[^a-zA-Z0-9]+")
+	lowerToUpperReg = regexp.MustCompile("([a-z0-9])([A-Z])")
+	seededRand      = rand.New(rand.NewSource(time.Now().UnixNano()))
+	stopWordsMap    = map[string]struct{}{}
+)
+
+func init() {
+	// initialize stopWords map for O(1) lookup
+	for _, w := range stopWords {
+		stopWordsMap[w] = struct{}{}
+	}
+}
+
 // GenerateRandomString generates a random string
 func (s *Strings) GenerateUniqueSlug(input string) string {
 	input = strings.ToLower(input)
-
-	reg, _ := regexp.Compile("[^a-z0-9]+")
-	slug := reg.ReplaceAllString(input, "-")
+	slug := slugReg.ReplaceAllString(input, "-")
 
 	slug = strings.Trim(slug, "-")
 
@@ -39,8 +54,7 @@ func (s *Strings) ToCamelCase(str string) string {
 }
 
 func (s *Strings) toCamelCase(str string) string {
-	reg, _ := regexp.Compile("[^a-zA-Z0-9]+")
-	processedString := reg.ReplaceAllString(str, " ")
+	processedString := nonAlphaNumReg.ReplaceAllString(str, " ")
 
 	words := strings.Fields(processedString)
 
@@ -62,9 +76,7 @@ func (s *Strings) ToSnakeCase(str string) string {
 
 func (s *Strings) toSnakeCase(str string) string {
 	str = strings.ReplaceAll(str, " ", "_")
-
-	str = regexp.MustCompile("([a-z0-9])([A-Z])").ReplaceAllString(str, "${1}_${2}")
-
+	str = lowerToUpperReg.ReplaceAllString(str, "${1}_${2}")
 	return strings.ToLower(str)
 }
 
@@ -104,20 +116,11 @@ var stopWords = []string{
 func (s *Strings) RemoveStopWords(text string) string {
 	words := strings.Fields(text)
 	var filteredWords []string
-
 	for _, word := range words {
-		isStopWord := false
-		for _, stopWord := range stopWords {
-			if strings.ToLower(word) == stopWord {
-				isStopWord = true
-				break
-			}
-		}
-		if !isStopWord {
+		if _, ok := stopWordsMap[strings.ToLower(word)]; !ok {
 			filteredWords = append(filteredWords, word)
 		}
 	}
-
 	return strings.Join(filteredWords, " ")
 }
 
@@ -153,13 +156,10 @@ func (s *Strings) EscapeString(input string) string {
 
 func (s *Strings) RandomStrE(length int) string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
-	var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
-
 	b := make([]byte, length)
 	for i := range b {
 		b[i] = charset[seededRand.Intn(len(charset))]
 	}
-
 	return string(b)
 }
 
@@ -167,8 +167,7 @@ func (s *Strings) RandomStr(length int) string {
 	var result string
 	for len(result) < length {
 		str := s.RandomStrE(length)
-		re, _ := regexp.Compile(`[^a-zA-Z0-9\s]+`)
-		str = re.ReplaceAllString(str, "")
+		str = nonAlnumRe.ReplaceAllString(str, "")
 		result += str
 	}
 

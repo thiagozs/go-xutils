@@ -1,6 +1,9 @@
 package xutils
 
 import (
+	"math/rand"
+	"time"
+
 	"github.com/thiagozs/go-xutils/aes"
 	"github.com/thiagozs/go-xutils/bools"
 	"github.com/thiagozs/go-xutils/calc"
@@ -68,6 +71,11 @@ func New() *XUtils {
 		cep:     cep.New(),
 		files:   files.New(),
 	}
+}
+
+func init() {
+	// seed the global math/rand generator once for the whole module
+	rand.Seed(time.Now().UnixNano())
 }
 
 func (x *XUtils) Strings() *strings.Strings {

@@ -1,0 +1,16 @@
+run:
+  deadline: 3m
+
+linters:
+  enable:
+    - govet
+    - gofmt
+    - goimports
+    - ineffassign
+    - staticcheck
+    - unused
+    - structcheck
+    - deadcode
+
+issues:
+  exclude-use-default: false
