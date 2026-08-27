@@ -1,10 +1,11 @@
 package structs
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestToQueryParams(t *testing.T) {
-	s := New()
-
 	tests := []struct {
 		name     string
 		input    any
@@ -43,7 +44,7 @@ func TestToQueryParams(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := s.ToQueryParams(tt.input)
+			result, _ := EncodeQuery(tt.input)
 			if result != tt.expected {
 				t.Errorf("Expected %s, got %s", tt.expected, result)
 			}
@@ -51,9 +52,27 @@ func TestToQueryParams(t *testing.T) {
 	}
 }
 
-func TestToQueryParamsWithJSONtags(t *testing.T) {
-	s := New()
+func TestEncodeQueryValidationAndTags(t *testing.T) {
+	var nilInput *struct{ Name string }
+	if _, err := EncodeQuery(nilInput); !errors.Is(err, ErrExpectedStruct) {
+		t.Fatalf("expected ErrExpectedStruct, got %v", err)
+	}
 
+	input := struct {
+		Visible string `json:"visibleName"`
+		Ignored string `json:"-"`
+		hidden  string
+	}{Visible: "yes", Ignored: "no", hidden: "no"}
+	got, err := EncodeQuery(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != "visibleName=yes" {
+		t.Fatalf("EncodeQuery() = %q", got)
+	}
+}
+
+func TestToQueryParamsWithJSONtags(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    any
@@ -103,7 +122,7 @@ func TestToQueryParamsWithJSONtags(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := s.ToQueryParams(tt.input)
+			result, _ := EncodeQuery(tt.input)
 			if result != tt.expected {
 				t.Errorf("Expected %s, got %s", tt.expected, result)
 			}
@@ -112,8 +131,6 @@ func TestToQueryParamsWithJSONtags(t *testing.T) {
 }
 
 func TestToQueryParamsWithJSONtagsomitempty(t *testing.T) {
-	s := New()
-
 	tests := []struct {
 		name     string
 		input    any
@@ -135,7 +152,7 @@ func TestToQueryParamsWithJSONtagsomitempty(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := s.ToQueryParams(tt.input)
+			result, _ := EncodeQuery(tt.input)
 			if result != tt.expected {
 				t.Errorf("Expected %s, got %s", tt.expected, result)
 			}

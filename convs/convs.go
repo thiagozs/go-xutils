@@ -5,47 +5,8 @@ import (
 	"strconv"
 )
 
-type Convs struct{}
-
-func New() *Convs {
-	return &Convs{}
-}
-
-func (c *Convs) ToInt(input string) (int, error) {
-	return NewConverter[int]().StringToType(input)
-}
-
-func (c *Convs) ToInt32(input string) (int32, error) {
-	return NewConverter[int32]().StringToType(input)
-}
-
-func (c *Convs) ToInt64(input string) (int64, error) {
-	return NewConverter[int64]().StringToType(input)
-}
-
-func (c *Convs) ToFloat32(input string) (float32, error) {
-	return NewConverter[float32]().StringToType(input)
-}
-
-func (c *Convs) ToFloat64(input string) (float64, error) {
-	return NewConverter[float64]().StringToType(input)
-}
-
-func (c *Convs) ToBool(input string) (bool, error) {
-	return NewConverter[bool]().StringToType(input)
-}
-
-func (c *Convs) ToString(input any) (string, error) {
-	return NewConverter[any]().ToString(input)
-}
-
-type Converter[T any] struct{}
-
-func NewConverter[T any]() *Converter[T] {
-	return &Converter[T]{}
-}
-
-func (c *Converter[T]) StringToType(s string) (T, error) {
+// Parse converts a string to the requested primitive type.
+func Parse[T any](s string) (T, error) {
 	var zero T
 	switch any(zero).(type) {
 	case int:
@@ -133,7 +94,8 @@ func (c *Converter[T]) StringToType(s string) (T, error) {
 	}
 }
 
-func (c *Converter[T]) ToString(input T) (string, error) {
+// Format converts a primitive value to its string representation.
+func Format[T any](input T) (string, error) {
 	switch v := any(input).(type) {
 	case int:
 		return strconv.Itoa(v), nil

@@ -3,7 +3,10 @@ package files
 import (
 	"bufio"
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,25 +20,34 @@ type Delimiter int
 // byte EBCDIC_LF = 0x25; //line feed
 
 const (
-	SLASH_N Delimiter = iota
-	EBCDIC_CP500_CR
-	EBCDIC_CP500_NL
-	EBCDIC_CP500_LF
+	DelimiterLF Delimiter = iota
+	DelimiterCR
+	DelimiterNEL
+	DelimiterEBCDICLF
 )
 
 func (d Delimiter) Value() byte {
-	return [...]byte{0x0A, 0x0D, 0x15, 0x25}[d]
+	values := [...]byte{0x0A, 0x0D, 0x15, 0x25}
+	if d < 0 || int(d) >= len(values) {
+		return values[DelimiterLF]
+	}
+	return values[d]
 }
 
-type Files struct{}
+type Files struct {
+	FileMode fs.FileMode
+	DirMode  fs.FileMode
+}
+
+var ErrDestinationInsideSource = errors.New("files: destination cannot be inside source")
 
 func New() *Files {
-	return &Files{}
+	return &Files{FileMode: 0644, DirMode: 0755}
 }
 
 // SaveFile writes data to a file specified by filePath. If the file doesn't exist, it is created. If it exists, it's overwritten.
 func (f *Files) SaveFile(filePath string, data []byte) error {
-	return os.WriteFile(filePath, data, 0644)
+	return os.WriteFile(filePath, data, f.FileMode)
 }
 
 // OpenFile reads and returns the contents of the file specified by filePath.
@@ -45,14 +57,15 @@ func (f *Files) OpenFile(filePath string) ([]byte, error) {
 
 // AppendFile appends data to a file specified by filePath. If the file doesn't exist, it's created.
 func (f *Files) AppendFile(filePath string, data []byte) error {
-	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, f.FileMode)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
-
-	_, err = file.Write(data)
-	return err
+	if _, err = file.Write(data); err != nil {
+		_ = file.Close()
+		return err
+	}
+	return file.Close()
 }
 
 // DirectoryExist checks if a specified directory exists.
@@ -80,7 +93,7 @@ func (f *Files) IsFile(path string) bool {
 	if err != nil {
 		return false
 	}
-	return !info.IsDir()
+	return info.Mode().IsRegular()
 }
 
 // FileSearch searches for files recursively starting from rootDir and returns a slice of file paths that match the provided fileName.
@@ -120,19 +133,19 @@ func (f *Files) RemoveFile(filePath string) error {
 	return os.Remove(filePath)
 }
 
-// RemoveDir removes the directory specified by dirPath.
+// RemoveDir removes an empty directory. Use RemoveAllDir for recursive removal.
 func (f *Files) RemoveDir(dirPath string) error {
-	return os.RemoveAll(dirPath)
+	return os.Remove(dirPath)
 }
 
 // CreateDir creates a new directory specified by dirPath.
 func (f *Files) CreateDir(dirPath string) error {
-	return os.Mkdir(dirPath, 0755)
+	return os.Mkdir(dirPath, f.DirMode)
 }
 
 // CreateDirAll creates a new directory specified by dirPath and all necessary parent directories.
 func (f *Files) CreateDirAll(dirPath string) error {
-	return os.MkdirAll(dirPath, 0755)
+	return os.MkdirAll(dirPath, f.DirMode)
 }
 
 // RenameFile renames a file from oldPath to newPath.
@@ -146,36 +159,82 @@ func (f *Files) CopyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer srcFile.Close()
-
-	dstFile, err := os.Create(dst)
+	defer func() { _ = srcFile.Close() }()
+	info, err := srcFile.Stat()
 	if err != nil {
 		return err
 	}
-	defer dstFile.Close()
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("files: source is not a regular file: %s", src)
+	}
+	if err := os.MkdirAll(filepath.Dir(dst), f.DirMode); err != nil {
+		return err
+	}
 
-	_, err = io.Copy(dstFile, srcFile)
-	return err
+	dstFile, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode().Perm())
+	if err != nil {
+		return err
+	}
+	if err := dstFile.Chmod(info.Mode().Perm()); err != nil {
+		_ = dstFile.Close()
+		return err
+	}
+
+	if _, err = io.Copy(dstFile, srcFile); err != nil {
+		_ = dstFile.Close()
+		return err
+	}
+	return dstFile.Close()
 }
 
 // CopyDir copies a directory from src to dst.
 func (f *Files) CopyDir(src, dst string) error {
-	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+	srcAbs, err := filepath.Abs(src)
+	if err != nil {
+		return err
+	}
+	dstAbs, err := filepath.Abs(dst)
+	if err != nil {
+		return err
+	}
+	relDestination, err := filepath.Rel(srcAbs, dstAbs)
+	if err != nil {
+		return err
+	}
+	if relDestination == "." || (relDestination != ".." && !strings.HasPrefix(relDestination, ".."+string(filepath.Separator))) {
+		return ErrDestinationInsideSource
+	}
+
+	return filepath.WalkDir(srcAbs, func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+
+		relPath, err := filepath.Rel(srcAbs, path)
 		if err != nil {
 			return err
 		}
 
-		relPath, err := filepath.Rel(src, path)
+		dstPath := filepath.Join(dstAbs, relPath)
+		if entry.Type()&os.ModeSymlink != 0 {
+			target, err := os.Readlink(path)
+			if err != nil {
+				return err
+			}
+			return os.Symlink(target, dstPath)
+		}
+
+		info, err := entry.Info()
 		if err != nil {
 			return err
 		}
-
-		dstPath := filepath.Join(dst, relPath)
-		if info.IsDir() {
-			return os.Mkdir(dstPath, 0755)
+		if entry.IsDir() {
+			return os.MkdirAll(dstPath, info.Mode().Perm())
 		}
-
-		return f.CopyFile(path, dstPath)
+		if info.Mode().IsRegular() {
+			return f.CopyFile(path, dstPath)
+		}
+		return fmt.Errorf("files: unsupported file type: %s", path)
 	})
 }
 
@@ -189,44 +248,47 @@ func (f *Files) MoveDir(src, dst string) error {
 	return os.Rename(src, dst)
 }
 
-// ReadDir reads and returns all the entries in a directory specified by dirPath.
+// ReadDir returns regular files immediately inside dirPath.
 func (f *Files) ReadDir(dirPath string) ([]os.FileInfo, error) {
 	var filesInfo []os.FileInfo
-
-	// use os.ReadDir for slightly better performance and clarity
-	var walk func(string) error
-	walk = func(p string) error {
-		entries, err := os.ReadDir(p)
-		if err != nil {
-			return err
+	entries, err := os.ReadDir(dirPath)
+	if err != nil {
+		return nil, err
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
 		}
-		for _, e := range entries {
-			fullPath := filepath.Join(p, e.Name())
-			if e.IsDir() {
-				if err := walk(fullPath); err != nil {
-					return err
-				}
-				continue
-			}
-			info, err := e.Info()
-			if err != nil {
-				return err
-			}
+		info, err := entry.Info()
+		if err != nil {
+			return nil, err
+		}
+		if info.Mode().IsRegular() {
 			filesInfo = append(filesInfo, info)
 		}
-		return nil
-	}
-
-	if err := walk(dirPath); err != nil {
-		return nil, err
 	}
 	return filesInfo, nil
 }
 
+// WalkFiles recursively returns regular file paths below rootDir.
+func WalkFiles(rootDir string) ([]string, error) {
+	var paths []string
+	err := filepath.WalkDir(rootDir, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.Type().IsRegular() {
+			paths = append(paths, path)
+		}
+		return nil
+	})
+	return paths, err
+}
+
 // FileExists checks if a file exists.
 func (f *Files) FileExists(filePath string) bool {
-	_, err := os.Stat(filePath)
-	return !os.IsNotExist(err)
+	info, err := os.Stat(filePath)
+	return err == nil && !info.IsDir()
 }
 
 // RemoveAllDir removes all files and directories in a directory specified by dirPath.
@@ -240,10 +302,10 @@ func (f *Files) ReadFileLines(filePath string, opts ...Delimiter) ([]string, err
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	if len(opts) == 0 {
-		opts = append(opts, SLASH_N)
+		opts = append(opts, DelimiterLF)
 	}
 
 	var lines []string
@@ -273,10 +335,10 @@ func (f *Files) ReadFileLinesBytes(filePath string, opts ...Delimiter) ([][]byte
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	if len(opts) == 0 {
-		opts = append(opts, SLASH_N)
+		opts = append(opts, DelimiterLF)
 	}
 
 	var lines [][]byte

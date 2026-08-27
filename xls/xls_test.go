@@ -137,3 +137,20 @@ func TestGetRows(t *testing.T) {
 		t.Errorf("GetRows returned %v, expected %v", rows, expectedRows)
 	}
 }
+
+func TestConfiguredSheet(t *testing.T) {
+	rows, err := NewForSheet("Sheet1").GetRows(xlsxFilePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 4 {
+		t.Fatalf("configured sheet returned %d rows", len(rows))
+	}
+	rows, err = NewForSheet("missing").GetRows(xlsxFilePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rows != nil {
+		t.Fatalf("missing sheet returned %#v", rows)
+	}
+}

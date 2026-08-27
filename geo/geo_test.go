@@ -5,7 +5,6 @@ import (
 )
 
 func TestLatitude(t *testing.T) {
-	geo := New()
 	tests := []struct {
 		lat      string
 		expected bool
@@ -19,14 +18,13 @@ func TestLatitude(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if res := geo.Latitude(test.lat); res != test.expected {
+		if res := IsLatitude(test.lat); res != test.expected {
 			t.Errorf("Latitude(%s) = %v; want %v", test.lat, res, test.expected)
 		}
 	}
 }
 
 func TestLongitude(t *testing.T) {
-	geo := New()
 	tests := []struct {
 		lon      string
 		expected bool
@@ -39,14 +37,13 @@ func TestLongitude(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if res := geo.Longitude(test.lon); res != test.expected {
+		if res := IsLongitude(test.lon); res != test.expected {
 			t.Errorf("Longitude(%s) = %v; want %v", test.lon, res, test.expected)
 		}
 	}
 }
 
 func TestCoordinates(t *testing.T) {
-	geo := New()
 	tests := []struct {
 		lat      string
 		lon      string
@@ -61,14 +58,13 @@ func TestCoordinates(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if res := geo.Coordinates(test.lat, test.lon); res != test.expected {
+		if res := AreCoordinates(test.lat, test.lon); res != test.expected {
 			t.Errorf("Coordinates(%s, %s) = %v; want %v", test.lat, test.lon, res, test.expected)
 		}
 	}
 }
 
 func TestLatitudeFloat64(t *testing.T) {
-	geo := New()
 	tests := []struct {
 		lat      float64
 		expected bool
@@ -81,14 +77,13 @@ func TestLatitudeFloat64(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if res := geo.LatitudeFloat64(test.lat); res != test.expected {
+		if res := IsLatitude(test.lat); res != test.expected {
 			t.Errorf("LatitudeFloat64(%f) = %v; want %v", test.lat, res, test.expected)
 		}
 	}
 }
 
 func TestLongitudeFloat64(t *testing.T) {
-	geo := New()
 	tests := []struct {
 		lon      float64
 		expected bool
@@ -100,14 +95,13 @@ func TestLongitudeFloat64(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if res := geo.LongitudeFloat64(test.lon); res != test.expected {
+		if res := IsLongitude(test.lon); res != test.expected {
 			t.Errorf("LongitudeFloat64(%f) = %v; want %v", test.lon, res, test.expected)
 		}
 	}
 }
 
 func TestCoordinatesFloat64(t *testing.T) {
-	geo := New()
 	tests := []struct {
 		lat      float64
 		lon      float64
@@ -121,7 +115,7 @@ func TestCoordinatesFloat64(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if res := geo.CoordinatesFloat64(test.lat, test.lon); res != test.expected {
+		if res := AreCoordinates(test.lat, test.lon); res != test.expected {
 			t.Errorf("CoordinatesFloat64(%f, %f) = %v; want %v", test.lat, test.lon, res, test.expected)
 		}
 	}

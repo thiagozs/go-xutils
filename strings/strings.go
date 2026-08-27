@@ -1,106 +1,174 @@
+// Package strings provides text transformations and random string generation.
 package strings
 
 import (
 	"fmt"
 	"regexp"
-	"strings"
+	stdstrings "strings"
 	"unicode"
 
 	"github.com/google/uuid"
-	"github.com/thiagozs/go-xutils/randutil"
+	"github.com/thiagozs/go-xutils/v2/randutil"
+	"golang.org/x/text/unicode/norm"
 )
-
-type Strings struct{}
-
-func New() *Strings {
-	return &Strings{}
-}
 
 var (
-	// precompiled regexes to avoid repeated compilation
 	slugReg         = regexp.MustCompile("[^a-z0-9]+")
-	nonAlnumRe      = regexp.MustCompile(`[^a-zA-Z0-9\\s]+`)
-	nonAlphaNumReg  = regexp.MustCompile("[^a-zA-Z0-9]+")
 	lowerToUpperReg = regexp.MustCompile("([a-z0-9])([A-Z])")
-	// use global rand seeded in xutils.init()
-	// seededRand removed to avoid per-package RNG sources
-	stopWordsMap = map[string]struct{}{}
+	stopWordsMap    = buildStopWordsMap()
 )
 
-func init() {
-	// initialize stopWords map for O(1) lookup
-	for _, w := range stopWords {
-		stopWordsMap[w] = struct{}{}
+// Generator generates random strings from an injectable random source.
+type Generator struct {
+	rng *randutil.Source
+}
+
+// NewGenerator creates a generator backed by the package's default source.
+func NewGenerator() *Generator {
+	return NewGeneratorWithSource(randutil.Default())
+}
+
+// NewGeneratorWithSource creates a generator with an injectable random source.
+func NewGeneratorWithSource(source *randutil.Source) *Generator {
+	if source == nil {
+		source = randutil.Default()
 	}
+	return &Generator{rng: source}
 }
 
-// GenerateRandomString generates a random string
-func (s *Strings) GenerateUniqueSlug(input string) string {
-	input = strings.ToLower(input)
-	slug := slugReg.ReplaceAllString(input, "-")
-
-	slug = strings.Trim(slug, "-")
-
-	shortUUID := uuid.New().String()[:6]
-
-	slug = fmt.Sprintf("%s-%s", slug, shortUUID)
-
-	return slug
+// UniqueSlug converts input to a slug and appends a random six-character suffix.
+func UniqueSlug(input string) string {
+	input = removeDiacritics(stdstrings.ToLower(input))
+	slug := stdstrings.Trim(slugReg.ReplaceAllString(input, "-"), "-")
+	return fmt.Sprintf("%s-%s", slug, uuid.New().String()[:6])
 }
 
-// ToCamelCase converts a string to camel case
-func (s *Strings) ToCamelCase(str string) string {
-	return s.toCamelCase(str)
-}
-
-func (s *Strings) toCamelCase(str string) string {
-	processedString := nonAlphaNumReg.ReplaceAllString(str, " ")
-
-	words := strings.Fields(processedString)
-
-	for index, word := range words {
-		if index == 0 {
-			words[index] = strings.ToLower(string(word[0])) + word[1:]
-		} else {
-			words[index] = strings.ToUpper(string(word[0])) + strings.ToLower(word[1:])
-		}
-	}
-
-	return strings.Join(words, "")
-}
-
-// ToSnakeCase converts a string to snake case
-func (s *Strings) ToSnakeCase(str string) string {
-	return s.toSnakeCase(str)
-}
-
-func (s *Strings) toSnakeCase(str string) string {
-	str = strings.ReplaceAll(str, " ", "_")
-	str = lowerToUpperReg.ReplaceAllString(str, "${1}_${2}")
-	return strings.ToLower(str)
-}
-
-// RemoveSpecialChars removes special chars
-func (s *Strings) RemoveSpecialChars(str string) string {
-	return s.removeSpecialChars(str)
-}
-
-func (s *Strings) isBrazilianSpecialChar(r rune) bool {
-	specialChars := "áàâãäéèêëíìîïóòôõöúùûüçÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ"
-	return strings.ContainsRune(specialChars, r)
-}
-
-func (s *Strings) removeSpecialChars(input string) string {
-	var result strings.Builder
-	for _, r := range input {
-		if unicode.IsLetter(r) || unicode.IsNumber(r) || unicode.IsSpace(r) || s.isBrazilianSpecialChar(r) {
+func removeDiacritics(input string) string {
+	var result stdstrings.Builder
+	for _, r := range norm.NFD.String(input) {
+		if !unicode.Is(unicode.Mn, r) {
 			result.WriteRune(r)
 		}
 	}
 	return result.String()
 }
 
-// brazilian stop words
+// CamelCase converts text to lower camel case while preserving Unicode.
+func CamelCase(str string) string {
+	words := stdstrings.FieldsFunc(str, func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	})
+	for index, word := range words {
+		if index == 0 {
+			words[index] = lowerFirst(word)
+		} else {
+			words[index] = upperFirst(stdstrings.ToLower(word))
+		}
+	}
+	return stdstrings.Join(words, "")
+}
+
+func lowerFirst(value string) string {
+	runes := []rune(value)
+	if len(runes) == 0 {
+		return ""
+	}
+	runes[0] = unicode.ToLower(runes[0])
+	return string(runes)
+}
+
+func upperFirst(value string) string {
+	runes := []rune(value)
+	if len(runes) == 0 {
+		return ""
+	}
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
+}
+
+// SnakeCase converts spaces and lower-to-upper boundaries to underscores.
+func SnakeCase(str string) string {
+	str = stdstrings.ReplaceAll(str, " ", "_")
+	str = lowerToUpperReg.ReplaceAllString(str, "${1}_${2}")
+	return stdstrings.ToLower(str)
+}
+
+// RemoveSpecialChars removes characters other than letters, numbers and spaces.
+func RemoveSpecialChars(input string) string {
+	var result stdstrings.Builder
+	for _, r := range input {
+		if unicode.IsLetter(r) || unicode.IsNumber(r) || unicode.IsSpace(r) {
+			result.WriteRune(r)
+		}
+	}
+	return result.String()
+}
+
+// RemoveStopWords removes common Brazilian Portuguese stop words.
+func RemoveStopWords(text string) string {
+	words := stdstrings.Fields(text)
+	filteredWords := make([]string, 0, len(words))
+	for _, word := range words {
+		if _, ok := stopWordsMap[stdstrings.ToLower(word)]; !ok {
+			filteredWords = append(filteredWords, word)
+		}
+	}
+	return stdstrings.Join(filteredWords, " ")
+}
+
+// EscapeSQLLike escapes backslashes and wildcard characters for a SQL LIKE
+// pattern that declares backslash as its ESCAPE character.
+func EscapeSQLLike(input string) string {
+	var builder stdstrings.Builder
+	for _, ch := range input {
+		switch ch {
+		case '\\':
+			builder.WriteString(`\\`)
+		case '_':
+			builder.WriteString(`\_`)
+		case '%':
+			builder.WriteString(`\%`)
+		default:
+			builder.WriteRune(ch)
+		}
+	}
+	return builder.String()
+}
+
+// Random generates a string from letters, numbers and symbols.
+func (g *Generator) Random(length int) string {
+	if length <= 0 {
+		return ""
+	}
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
+	result := make([]byte, length)
+	for i := range result {
+		result[i] = charset[g.rng.Intn(len(charset))]
+	}
+	return string(result)
+}
+
+// RandomAlphanumeric generates a string containing only letters and numbers.
+func (g *Generator) RandomAlphanumeric(length int) string {
+	if length <= 0 {
+		return ""
+	}
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	result := make([]byte, length)
+	for i := range result {
+		result[i] = charset[g.rng.Intn(len(charset))]
+	}
+	return string(result)
+}
+
+func buildStopWordsMap() map[string]struct{} {
+	result := make(map[string]struct{}, len(stopWords))
+	for _, word := range stopWords {
+		result[word] = struct{}{}
+	}
+	return result
+}
+
 var stopWords = []string{
 	"o", "a", "os", "as", "um", "uma", "uns", "umas", "de", "do", "da", "dos", "das",
 	"para", "pra", "por", "per", "com", "sem", "sob", "sobre", "entre", "dentro", "e",
@@ -110,66 +178,4 @@ var stopWords = []string{
 	"antes", "tarde", "cedo", "hoje", "ontem", "amanhã", "que", "qual", "quais", "como",
 	"onde", "quando", "quanto", "quanta", "quantos", "quantas", "este", "esta", "estes",
 	"estas", "isso", "isto", "aquilo",
-}
-
-// RemoveStopWords removes stop(brazilian-ptBR) words from a string
-func (s *Strings) RemoveStopWords(text string) string {
-	words := strings.Fields(text)
-	var filteredWords []string
-	for _, word := range words {
-		if _, ok := stopWordsMap[strings.ToLower(word)]; !ok {
-			filteredWords = append(filteredWords, word)
-		}
-	}
-	return strings.Join(filteredWords, " ")
-}
-
-// EscapeString escapes special characters in the input string.
-func (s *Strings) EscapeString(input string) string {
-	var builder strings.Builder
-
-	for _, ch := range input {
-		switch ch {
-		case '\\':
-			builder.WriteString(`\\`)
-		case '\'':
-			builder.WriteString(`\'`)
-		case '"':
-			builder.WriteString(`\"`)
-		case '\n':
-			builder.WriteString(`\\n`)
-		case '\r':
-			builder.WriteString(`\\r`)
-		case '_':
-			builder.WriteString(`\_`)
-		case '%':
-			builder.WriteString(`\%`)
-		case '*':
-			builder.WriteString(`\*`)
-		default:
-			builder.WriteRune(ch)
-		}
-	}
-
-	return builder.String()
-}
-
-func (s *Strings) RandomStrE(length int) string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = charset[randutil.Global.Intn(len(charset))]
-	}
-	return string(b)
-}
-
-func (s *Strings) RandomStr(length int) string {
-	var result string
-	for len(result) < length {
-		str := s.RandomStrE(length)
-		str = nonAlnumRe.ReplaceAllString(str, "")
-		result += str
-	}
-
-	return result[:length]
 }

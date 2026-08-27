@@ -1,8 +1,11 @@
 package csv
 
 import (
+	"errors"
 	"os"
+	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/xuri/excelize/v2"
@@ -46,6 +49,44 @@ func TestParseToMap(t *testing.T) {
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("expected %v for file %v but got %v", test.expected, test.filePath, result)
 		}
+	}
+}
+
+func TestParseStream(t *testing.T) {
+	got, err := Parse(strings.NewReader("name,age\nAna,30\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []map[string]string{{"name": "Ana", "age": "30"}}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("Parse() = %#v, want %#v", got, want)
+	}
+	if _, err := Parse(strings.NewReader("name,age\nAna,30,ignored\n")); err == nil {
+		t.Fatal("expected mismatched field count error")
+	}
+	if _, err := Parse(strings.NewReader("name,name\nAna,30\n")); !errors.Is(err, ErrDuplicateHeader) {
+		t.Fatalf("expected ErrDuplicateHeader, got %v", err)
+	}
+
+	if _, err := Parse(strings.NewReader("name\n\"unterminated")); err == nil {
+		t.Fatal("expected malformed CSV error")
+	}
+}
+
+func TestConfiguredDelimiter(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "data.csv")
+	if err := os.WriteFile(path, []byte("name;age\nAna;30\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	parser := New()
+	parser.Comma = ';'
+	got, err := parser.ParseToMap(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []map[string]string{{"name": "Ana", "age": "30"}}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("ParseToMap() = %#v, want %#v", got, want)
 	}
 }
 

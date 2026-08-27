@@ -3,37 +3,39 @@ package slices
 import (
 	"reflect"
 	"testing"
-
-	"github.com/thiagozs/go-xutils/strings"
 )
 
-var (
-	s = New(strings.New())
-)
-
-func TestAreKeysValid(t *testing.T) {
-	// Inicialize a instância de Slices aqui
-	// Substitua nil pelo valor apropriado se necessário
-	s := New(nil)
-
+func TestContainsAll(t *testing.T) {
 	tests := []struct {
 		requiredKeys []string
 		incomingKeys []string
 		expected     bool
 	}{
 		{[]string{"key1", "key2", "key3"}, []string{"key1", "key4"}, false},
-		{[]string{"key1", "key2", "key3"}, []string{"key1", "key2"}, true},
+		{[]string{"key1", "key2", "key3"}, []string{"key1", "key2"}, false},
 		{[]string{"key1", "key2", "key3"}, []string{"key1", "key2", "key3"}, true},
 		{[]string{"key1", "key2", "key3"}, []string{"key1", "key2", "key4"}, false},
 		{[]string{"key1", "key2", "key3"}, []string{"key3", "key4"}, false},
-		{[]string{"key1", "key2", "key3"}, []string{"key3"}, true},
+		{[]string{"key1", "key2", "key3"}, []string{"key3"}, false},
+		{[]string{"key1"}, []string{"key1", "extra"}, true},
+		{nil, []string{"anything"}, true},
 	}
 
 	for _, test := range tests {
-		result := s.AreKeysValid(test.requiredKeys, test.incomingKeys)
+		result := ContainsAll(test.incomingKeys, test.requiredKeys)
 		if result != test.expected {
 			t.Errorf("For requiredKeys: %v and incomingKeys: %v, expected %v, got %v", test.requiredKeys, test.incomingKeys, test.expected, result)
 		}
+	}
+}
+
+func TestTransformsDoNotMutateInput(t *testing.T) {
+	input := []string{" Value ", "OTHER"}
+	want := append([]string(nil), input...)
+
+	_ = Normalize(input)
+	if !reflect.DeepEqual(input, want) {
+		t.Fatalf("Normalize mutated its input: got %v, want %v", input, want)
 	}
 }
 
@@ -47,7 +49,7 @@ func TestTrimSpaces(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := s.TrimSpaces(test.input)
+		result := TrimSpace(test.input)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("expected %v, got %v", test.expected, result)
 		}
@@ -64,7 +66,7 @@ func TestRemoveDuplicates(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := s.RemoveDuplicates(test.input)
+		result := Unique(test.input)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("expected %v, got %v", test.expected, result)
 		}
@@ -81,7 +83,7 @@ func TestRemoveEmpty(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := s.RemoveEmpty(test.input)
+		result := Compact(test.input)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("expected %v, got %v", test.expected, result)
 		}
@@ -98,7 +100,7 @@ func TestSliceToLower(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := s.ToLower(test.input)
+		result := Lower(test.input)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("expected %v, got %v", test.expected, result)
 		}
@@ -115,7 +117,7 @@ func TestSliceToUpper(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := s.ToUpper(test.input)
+		result := Upper(test.input)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("expected %v, got %v", test.expected, result)
 		}
@@ -131,7 +133,7 @@ func TestSliceToTitle(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := s.ToTitle(test.input)
+		result := Title(test.input)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("expected %v, got %v", test.expected, result)
 		}
@@ -148,7 +150,7 @@ func TestSliceToCamel(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := s.ToCamel(test.input)
+		result := CamelCase(test.input)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("expected %v, got %v", test.expected, result)
 		}
@@ -165,7 +167,7 @@ func TestSliceToSnake(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := s.ToSnake(test.input)
+		result := SnakeCase(test.input)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("expected %v, got %v", test.expected, result)
 		}
@@ -181,14 +183,14 @@ func TestRemoveStopWordsFromSlice(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := s.RemoveStopWords(test.input)
+		result := RemoveStopWords(test.input)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("expected %v, got %v", test.expected, result)
 		}
 	}
 }
 
-func TestRemoveEDTS(t *testing.T) {
+func TestNormalize(t *testing.T) {
 	tests := []struct {
 		input    []string
 		expected []string
@@ -196,10 +198,11 @@ func TestRemoveEDTS(t *testing.T) {
 		{[]string{"  duplicate ", "DUPLICATE", " unique "}, []string{"duplicate", "unique"}},
 		{[]string{"", "  ", " "}, []string{}},
 		{[]string{"  ", "  ", " "}, []string{}},
+		{[]string{"  UPPER ", "upper", " Mixed "}, []string{"upper", "mixed"}},
 	}
 
 	for _, test := range tests {
-		result := s.RemoveEDTS(test.input)
+		result := Normalize(test.input)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("expected %v, got %v", test.expected, result)
 		}

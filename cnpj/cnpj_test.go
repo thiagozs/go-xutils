@@ -1,14 +1,13 @@
 package cnpj
 
 import (
+	"strings"
 	"testing"
 )
 
 func TestCNPJ(t *testing.T) {
-	c := New()
-
 	t.Run("Generate CNPJ", func(t *testing.T) {
-		generatedCNPJ := c.Generate()
+		generatedCNPJ := Generate()
 		if len(generatedCNPJ) != 14 {
 			t.Errorf("expected length: 14, actual length: %d", len(generatedCNPJ))
 		}
@@ -18,11 +17,11 @@ func TestCNPJ(t *testing.T) {
 		invalidCNPJ := "11111111111111"
 		validCNPJ := "15757747000166"
 
-		if !c.IsValid(validCNPJ) {
+		if !IsValid(validCNPJ) {
 			t.Errorf("expected valid, but got invalid")
 		}
 
-		if c.IsValid(invalidCNPJ) {
+		if IsValid(invalidCNPJ) {
 			t.Errorf("expected invalid, but got valid")
 		}
 	})
@@ -48,11 +47,31 @@ func TestCNPJ(t *testing.T) {
 
 		for _, test := range tests {
 			t.Run(test.cnpj, func(t *testing.T) {
-				actual := c.TrimCNPJ(test.cnpj)
+				actual := Normalize(test.cnpj)
 				if actual != test.expected {
 					t.Errorf("expected %v, got %v", test.expected, actual)
 				}
 			})
 		}
 	})
+}
+
+func TestPackageAPIAndRepeatedDigits(t *testing.T) {
+	if !IsValid("11.444.777/0001-61") {
+		t.Fatal("expected formatted CNPJ to be valid")
+	}
+	if IsValid("abc11.444.777/0001-61") {
+		t.Fatal("CNPJ with arbitrary prefix must be invalid")
+	}
+	for digit := byte('0'); digit <= '9'; digit++ {
+		value := strings.Repeat(string(digit), 14)
+		if IsValid(value) {
+			t.Fatalf("repeated CNPJ %q must be invalid", value)
+		}
+	}
+	for i := 0; i < 1000; i++ {
+		if value := Generate(); !IsValid(value) {
+			t.Fatalf("Generate() returned invalid CNPJ %q", value)
+		}
+	}
 }

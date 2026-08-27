@@ -5,8 +5,6 @@ import (
 )
 
 func TestToBool(t *testing.T) {
-	b := New()
-
 	tests := []struct {
 		input    string
 		expected bool
@@ -22,7 +20,7 @@ func TestToBool(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result, err := b.ToBool(test.input)
+		result, err := Parse(test.input)
 		if err != nil && !test.err {
 			t.Errorf("unexpected error for input %v: %v", test.input, err)
 			continue
@@ -40,8 +38,6 @@ func TestToBool(t *testing.T) {
 }
 
 func TestToString(t *testing.T) {
-	b := New()
-
 	tests := []struct {
 		input    bool
 		expected string
@@ -51,7 +47,7 @@ func TestToString(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := b.ToString(test.input)
+		result := Format(test.input)
 		if result != test.expected {
 			t.Errorf("expected %v for input %v but got %v", test.expected, test.input, result)
 		}

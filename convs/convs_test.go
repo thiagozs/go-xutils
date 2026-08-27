@@ -61,26 +61,19 @@ func TestStringToType(t *testing.T) {
 
 			switch v := tt.want.(type) {
 			case int:
-				converter := NewConverter[int]()
-				got, err = converter.StringToType(tt.input)
+				got, err = Parse[int](tt.input)
 			case int32:
-				converter := NewConverter[int32]()
-				got, err = converter.StringToType(tt.input)
+				got, err = Parse[int32](tt.input)
 			case int64:
-				converter := NewConverter[int64]()
-				got, err = converter.StringToType(tt.input)
+				got, err = Parse[int64](tt.input)
 			case float32:
-				converter := NewConverter[float32]()
-				got, err = converter.StringToType(tt.input)
+				got, err = Parse[float32](tt.input)
 			case float64:
-				converter := NewConverter[float64]()
-				got, err = converter.StringToType(tt.input)
+				got, err = Parse[float64](tt.input)
 			case bool:
-				converter := NewConverter[bool]()
-				got, err = converter.StringToType(tt.input)
+				got, err = Parse[bool](tt.input)
 			case string:
-				converter := NewConverter[string]()
-				got, err = converter.StringToType(tt.input)
+				got, err = Parse[string](tt.input)
 			default:
 				t.Fatalf("Unsupported type: %T", v)
 			}
@@ -148,8 +141,7 @@ func TestToString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			converter := NewConverter[any]()
-			got, err := converter.ToString(tt.input)
+			got, err := Format(tt.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ToString() error = %v, wantErr %v", err, tt.wantErr)
 				return

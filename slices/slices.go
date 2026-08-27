@@ -1,3 +1,4 @@
+// Package slices provides non-mutating transformations for string slices.
 package slices
 
 import (
@@ -6,126 +7,99 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
-	xstr "github.com/thiagozs/go-xutils/strings"
+	xstr "github.com/thiagozs/go-xutils/v2/strings"
 )
 
-type Slices struct {
-	str *xstr.Strings
-}
-
-func New(strs *xstr.Strings) *Slices {
-	return &Slices{
-		str: strs,
+// ContainsAll reports whether values contains every required value.
+func ContainsAll(values, required []string) bool {
+	available := make(map[string]struct{}, len(values))
+	for _, value := range values {
+		available[value] = struct{}{}
 	}
-}
-
-// AreKeysValid checks if all required keys are present in the incoming keys
-func (s *Slices) AreKeysValid(requiredKeys, incomingKeys []string) bool {
-	requiredKeysMap := make(map[string]bool)
-
-	for _, key := range requiredKeys {
-		requiredKeysMap[key] = true
-	}
-
-	for _, key := range incomingKeys {
-		if _, exists := requiredKeysMap[key]; !exists {
+	for _, value := range required {
+		if _, exists := available[value]; !exists {
 			return false
 		}
 	}
 	return true
 }
 
-// TrimSpaces trims spaces
-func (s *Slices) TrimSpaces(strs []string) []string {
-	for i, v := range strs {
-		strs[i] = strings.TrimSpace(v)
-	}
-	return strs
+// TrimSpace trims leading and trailing whitespace from every value.
+func TrimSpace(values []string) []string {
+	return transform(values, strings.TrimSpace)
 }
 
-// RemoveDuplicates removes duplicates
-func (s *Slices) RemoveDuplicates(strs []string) []string {
-	keys := make(map[string]bool)
-	list := []string{}
+// Unique removes case-insensitive duplicates while preserving order and spelling.
+func Unique(values []string) []string {
+	seen := make(map[string]struct{}, len(values))
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		key := strings.ToLower(value)
+		if _, exists := seen[key]; exists {
+			continue
+		}
+		seen[key] = struct{}{}
+		result = append(result, value)
+	}
+	return result
+}
 
-	for _, entry := range strs {
-		lowerEntry := strings.ToLower(entry)
-		if _, value := keys[lowerEntry]; !value {
-			keys[lowerEntry] = true
-			list = append(list, entry)
+// Compact removes empty values.
+func Compact(values []string) []string {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		if value != "" {
+			result = append(result, value)
 		}
 	}
-
-	return list
+	return result
 }
 
-// RemoveEmpty removes empty
-func (s *Slices) RemoveEmpty(strs []string) []string {
-	list := []string{}
+// CompactUnique removes empty values and case-insensitive duplicates.
+func CompactUnique(values []string) []string {
+	return Unique(Compact(values))
+}
 
-	for _, entry := range strs {
-		if entry != "" {
-			list = append(list, entry)
-		}
+// Normalize trims, lowercases, and removes empty and duplicate values.
+func Normalize(values []string) []string {
+	return CompactUnique(Lower(TrimSpace(values)))
+}
+
+// Lower lowercases every value.
+func Lower(values []string) []string {
+	return transform(values, strings.ToLower)
+}
+
+// Upper uppercases every value.
+func Upper(values []string) []string {
+	return transform(values, strings.ToUpper)
+}
+
+// Title converts every value to Brazilian Portuguese title case.
+func Title(values []string) []string {
+	title := cases.Title(language.BrazilianPortuguese)
+	return transform(values, title.String)
+}
+
+// CamelCase converts every value to lower camel case.
+func CamelCase(values []string) []string {
+	return transform(values, xstr.CamelCase)
+}
+
+// SnakeCase converts every value to snake case.
+func SnakeCase(values []string) []string {
+	return transform(values, xstr.SnakeCase)
+}
+
+// RemoveStopWords removes common Brazilian Portuguese stop words from every value.
+func RemoveStopWords(values []string) []string {
+	return transform(values, xstr.RemoveStopWords)
+}
+
+func transform(values []string, fn func(string) string) []string {
+	result := make([]string, len(values))
+	for index, value := range values {
+		result[index] = fn(value)
 	}
-
-	return list
-}
-
-// RemoveEmptyAndDuplicates removes empty and duplicates
-func (s *Slices) RemoveEmptyAndDuplicates(strs []string) []string {
-	return s.RemoveDuplicates(s.RemoveEmpty(strs))
-}
-
-// RemoveEDTS removes empty, duplicates, trim spaces and converts to lower case
-func (s *Slices) RemoveEDTS(strs []string) []string {
-	return s.RemoveEmptyAndDuplicates(s.TrimSpaces(strs))
-}
-
-// SliceToLower converts all strings in a slice to lower case
-func (s *Slices) ToLower(strs []string) []string {
-	for i, v := range strs {
-		strs[i] = strings.ToLower(v)
-	}
-	return strs
-}
-
-// SliceToUpper converts all strings in a slice to upper case
-func (s *Slices) ToUpper(strs []string) []string {
-	for i, v := range strs {
-		strs[i] = strings.ToUpper(v)
-	}
-	return strs
-}
-
-// SliceToTitle converts all strings in a slice to title case
-func (s *Slices) ToTitle(strs []string) []string {
-	for i, v := range strs {
-		strs[i] = cases.Title(language.BrazilianPortuguese).String(v)
-	}
-	return strs
-}
-
-// SliceToCamel converts all strings in a slice to camel case
-func (s *Slices) ToCamel(strs []string) []string {
-	results := []string{}
-	for _, v := range strs {
-		results = append(results, s.str.ToCamelCase(v))
-	}
-	return results
-}
-
-// SliceToSnake converts all strings in a slice to snake case
-func (s *Slices) ToSnake(strs []string) []string {
-	for i, v := range strs {
-		strs[i] = s.str.ToSnakeCase(v)
-	}
-	return strs
-}
-
-func (s *Slices) RemoveStopWords(strs []string) []string {
-	for i, v := range strs {
-		strs[i] = s.str.RemoveStopWords(v)
-	}
-	return strs
+	return result
 }

@@ -1,75 +1,59 @@
 package rsa
 
 import (
+	"errors"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
 )
 
-type RSASuite struct {
-	suite.Suite
-	pem          *RSAPem
-	rsa          *RSA
-	publicKey    string
-	privateKey   string
-	strEncrypted string
-	toEncrypt    string
+func TestOAEPAndPEMRoundTrip(t *testing.T) {
+	privateKey, publicKey, err := GenerateKeyPair(2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	privatePEM, err := ExportPrivateKey(privateKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	publicPEM, err := ExportPublicKey(publicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	parsedPrivate, err := ParsePrivateKey(privatePEM)
+	if err != nil {
+		t.Fatal(err)
+	}
+	parsedPublic, err := ParsePublicKey(publicPEM)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ciphertext, err := EncryptOAEP(parsedPublic, []byte("secret"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	plaintext, err := DecryptOAEP(parsedPrivate, ciphertext)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(plaintext) != "secret" {
+		t.Fatalf("unexpected plaintext: %q", plaintext)
+	}
 }
 
-func (suite *RSASuite) SetupTest() {
-	suite.pem = NewPem()
-	suite.rsa = New()
-
-	priv, pub := suite.pem.RSAGenKeyPair()
-
-	strPub, err := suite.pem.RSAExportPublicKeyAsPem(pub)
-	if err != nil {
-		suite.T().Error("rsa export public key error", err)
-		return
+func TestInvalidKeys(t *testing.T) {
+	if _, err := ParsePublicKey("invalid"); !errors.Is(err, ErrInvalidPEM) {
+		t.Fatalf("expected ErrInvalidPEM, got %v", err)
 	}
-
-	strPriv := suite.pem.RSAExportPrivateKeyAsPem(priv)
-	if err != nil {
-		suite.T().Error("rsa export private key error", err)
-		return
+	if _, err := ParsePrivateKey("invalid"); !errors.Is(err, ErrInvalidPEM) {
+		t.Fatalf("expected ErrInvalidPEM, got %v", err)
 	}
-
-	suite.publicKey = strPub
-	suite.privateKey = strPriv
-	suite.toEncrypt = "123456"
-
-	strEncrypted, err := suite.rsa.PublicKey(strPub).Encrypt(suite.toEncrypt)
-	if err != nil {
-		suite.T().Error("rsa public encrypt error", err)
-		return
+	if _, _, err := GenerateKeyPair(1024); err == nil {
+		t.Fatal("expected weak key size rejection")
 	}
-
-	suite.strEncrypted = strEncrypted
-}
-
-func (suite *RSASuite) TestEncrypt() {
-	p := suite.rsa.PublicKey(suite.publicKey)
-	str, err := p.Encrypt(suite.toEncrypt)
-	if err != nil {
-		suite.T().Error("rsa public encrypt error", err)
-		return
+	if _, err := ExportPrivateKey(nil); !errors.Is(err, ErrNotRSAKey) {
+		t.Fatalf("expected ErrNotRSAKey, got %v", err)
 	}
-	suite.T().Log(str)
-}
-
-func (suite *RSASuite) TestDecrypt() {
-	p := suite.rsa.PrivateKey(suite.privateKey)
-	str, err := p.Decrypt(suite.strEncrypted)
-	if err != nil {
-		suite.T().Error("rsa private decrypt error", err)
-		return
+	if _, err := ExportPublicKey(nil); !errors.Is(err, ErrNotRSAKey) {
+		t.Fatalf("expected ErrNotRSAKey, got %v", err)
 	}
-	suite.T().Log(str)
-
-	assert.Equal(suite.T(), suite.toEncrypt, str)
-}
-
-func TestRSASuite(t *testing.T) {
-	suite.Run(t, new(RSASuite))
 }

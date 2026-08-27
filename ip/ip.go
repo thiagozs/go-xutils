@@ -6,19 +6,14 @@ import (
 	"strings"
 )
 
-type Ip struct{}
-
-func New() *Ip {
-	return &Ip{}
-}
-
-func (i *Ip) IPv4(ip string) bool {
-	parts := strings.Split(ip, ".")
+// IsIPv4 validates an IPv4 address in dotted decimal notation.
+func IsIPv4(value string) bool {
+	parts := strings.Split(value, ".")
 	if len(parts) != 4 {
 		return false
 	}
 	for _, part := range parts {
-		if len(part) == 0 || len(part) > 3 {
+		if len(part) == 0 || len(part) > 3 || (len(part) > 1 && part[0] == '0') {
 			return false
 		}
 		num, err := strconv.Atoi(part)
@@ -29,10 +24,10 @@ func (i *Ip) IPv4(ip string) bool {
 	return true
 }
 
-func (i *Ip) IPv6(ip string) bool {
-	return net.ParseIP(ip) != nil && strings.Contains(ip, ":")
+// IsIPv6 validates an IPv6 address.
+func IsIPv6(value string) bool {
+	return net.ParseIP(value) != nil && strings.Contains(value, ":")
 }
 
-func (i *Ip) IP(ip string) bool {
-	return i.IPv4(ip) || i.IPv6(ip)
-}
+// IsValid reports whether value is either a valid IPv4 or IPv6 address.
+func IsValid(value string) bool { return IsIPv4(value) || IsIPv6(value) }
