@@ -5,7 +5,6 @@ import (
 )
 
 func TestIsValidCPF(t *testing.T) {
-	c := New()
 	tests := []struct {
 		cpf      string
 		expected bool
@@ -17,12 +16,13 @@ func TestIsValidCPF(t *testing.T) {
 		{"123", false},         // CPF too short
 		{"", false},            // empty string
 		{"abcdefghijk", false}, // non-numeric characters
+		{"abc12345678909", false},
 		{"00000000000", false}, // invalid CPF (zeros only)
 	}
 
 	for _, test := range tests {
 		t.Run(test.cpf, func(t *testing.T) {
-			actual := c.IsValid(test.cpf)
+			actual := IsValid(test.cpf)
 			if actual != test.expected {
 				t.Errorf("expected %v, got %v", test.expected, actual)
 			}
@@ -31,12 +31,10 @@ func TestIsValidCPF(t *testing.T) {
 }
 
 func TestGenerateCPF(t *testing.T) {
-	c := New()
-
 	for i := 0; i < 10; i++ {
 		t.Run("Test case", func(t *testing.T) {
-			cpf := c.Generate()
-			if !c.IsValid(cpf) {
+			cpf := Generate()
+			if !IsValid(cpf) {
 				t.Errorf("generated CPF is not valid: %v", cpf)
 			}
 		})
@@ -44,7 +42,6 @@ func TestGenerateCPF(t *testing.T) {
 }
 
 func TestTrimCPF(t *testing.T) {
-	c := New()
 	tests := []struct {
 		cpf      string
 		expected string
@@ -62,10 +59,24 @@ func TestTrimCPF(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.cpf, func(t *testing.T) {
-			actual := c.TrimCPF(test.cpf)
+			actual := Normalize(test.cpf)
 			if actual != test.expected {
 				t.Errorf("expected %v, got %v", test.expected, actual)
 			}
 		})
+	}
+}
+
+func TestPackageAPIWithFormattedCPF(t *testing.T) {
+	if !IsValid("529.982.247-25") {
+		t.Fatal("expected formatted CPF to be valid")
+	}
+	if got := Normalize("529.982.247-25"); got != "52998224725" {
+		t.Fatalf("Normalize() = %q", got)
+	}
+	for i := 0; i < 1000; i++ {
+		if value := Generate(); !IsValid(value) {
+			t.Fatalf("Generate() returned invalid CPF %q", value)
+		}
 	}
 }

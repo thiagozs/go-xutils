@@ -1,12 +1,5 @@
 package cep
 
-type CityInfo struct {
-	UF       string
-	City     string
-	CEPStart string
-	CEPEnd   string
-}
-
 var (
 	cepsrangecsv = `
 UF,CIDADE,CEP DE,CEP ATÉ

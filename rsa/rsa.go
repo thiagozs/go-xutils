@@ -3,75 +3,83 @@ package rsa
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
+	"fmt"
 )
 
-type RSA struct{}
+var (
+	ErrInvalidPEM = errors.New("rsa: invalid PEM data")
+	ErrNotRSAKey  = errors.New("rsa: key is not an RSA key")
+)
 
-func New() *RSA {
-	return &RSA{}
-}
-
-type RSAPublicKey struct {
-	PublicKey string
-}
-
-type RSAPrivateKey struct {
-	PrivateKey string
-}
-
-func (r *RSA) PublicKey(publicKey string) *RSAPublicKey {
-	return &RSAPublicKey{
-		PublicKey: publicKey,
+// ParsePublicKey accepts PKIX PUBLIC KEY and PKCS#1 RSA PUBLIC KEY PEM blocks.
+func ParsePublicKey(value string) (*rsa.PublicKey, error) {
+	block, _ := pem.Decode([]byte(value))
+	if block == nil {
+		return nil, ErrInvalidPEM
 	}
-}
-
-func (r *RSA) PrivateKey(privateKey string) *RSAPrivateKey {
-	return &RSAPrivateKey{
-		PrivateKey: privateKey,
+	if key, err := x509.ParsePKIXPublicKey(block.Bytes); err == nil {
+		publicKey, ok := key.(*rsa.PublicKey)
+		if !ok {
+			return nil, ErrNotRSAKey
+		}
+		return publicKey, nil
 	}
-}
-
-func (pub *RSAPublicKey) Encrypt(encryptStr string) (string, error) {
-	// pem
-	block, _ := pem.Decode([]byte(pub.PublicKey))
-
-	// x509
-	publicKeyInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
+	publicKey, err := x509.ParsePKCS1PublicKey(block.Bytes)
 	if err != nil {
-		return "", err
+		return nil, fmt.Errorf("rsa: parse public key: %w", err)
 	}
-
-	publicKey := publicKeyInterface.(*rsa.PublicKey)
-
-	encryptedStr, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, []byte(encryptStr))
-	if err != nil {
-		return "", err
-	}
-
-	return base64.URLEncoding.EncodeToString(encryptedStr), nil
+	return publicKey, nil
 }
 
-func (pri *RSAPrivateKey) Decrypt(decryptStr string) (string, error) {
-	// pem
-	block, _ := pem.Decode([]byte(pri.PrivateKey))
-
-	// X509
-	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-	if err != nil {
-		return "", err
+// ParsePrivateKey accepts PKCS#1 RSA PRIVATE KEY and unencrypted PKCS#8 PEM.
+func ParsePrivateKey(value string) (*rsa.PrivateKey, error) {
+	block, _ := pem.Decode([]byte(value))
+	if block == nil {
+		return nil, ErrInvalidPEM
 	}
-	decryptBytes, err := base64.URLEncoding.DecodeString(decryptStr)
-	if err != nil {
-		return "", err
+	if key, err := x509.ParsePKCS1PrivateKey(block.Bytes); err == nil {
+		return key, nil
 	}
-
-	decrypted, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, decryptBytes)
+	key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
-		return "", err
+		return nil, fmt.Errorf("rsa: parse private key: %w", err)
 	}
+	privateKey, ok := key.(*rsa.PrivateKey)
+	if !ok {
+		return nil, ErrNotRSAKey
+	}
+	return privateKey, nil
+}
 
-	return string(decrypted), nil
+// EncryptOAEP encrypts plaintext using RSA-OAEP with SHA-256.
+func EncryptOAEP(publicKey *rsa.PublicKey, plaintext []byte) (string, error) {
+	if publicKey == nil {
+		return "", ErrNotRSAKey
+	}
+	ciphertext, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, publicKey, plaintext, nil)
+	if err != nil {
+		return "", fmt.Errorf("rsa: encrypt OAEP: %w", err)
+	}
+	return base64.RawURLEncoding.EncodeToString(ciphertext), nil
+}
+
+// DecryptOAEP decrypts ciphertext produced by EncryptOAEP.
+func DecryptOAEP(privateKey *rsa.PrivateKey, encoded string) ([]byte, error) {
+	if privateKey == nil {
+		return nil, ErrNotRSAKey
+	}
+	ciphertext, err := base64.RawURLEncoding.DecodeString(encoded)
+	if err != nil {
+		return nil, fmt.Errorf("rsa: decode ciphertext: %w", err)
+	}
+	plaintext, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, privateKey, ciphertext, nil)
+	if err != nil {
+		return nil, fmt.Errorf("rsa: decrypt OAEP: %w", err)
+	}
+	return plaintext, nil
 }

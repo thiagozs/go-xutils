@@ -89,6 +89,25 @@ func TestNormalize(t *testing.T) {
 	}
 }
 
+func TestPackageAPIRejectsPlausibleButInvalidNumber(t *testing.T) {
+	if _, err := Normalize("11", "BR"); err == nil {
+		t.Fatal("expected short number to be rejected")
+	}
+	if IsValid("11", "BR") {
+		t.Fatal("short number must not be valid")
+	}
+}
+
+func TestGenerationValidatesParameters(t *testing.T) {
+	p := New()
+	if got := p.Generate(-1); len(got) != 0 {
+		t.Fatalf("negative limit generated %d numbers", len(got))
+	}
+	if got := p.GenerateMobile(2); len(got) != 2 {
+		t.Fatalf("GenerateMobile() returned %d numbers", len(got))
+	}
+}
+
 func TestIsValid(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -205,7 +224,7 @@ func TestGenerate(t *testing.T) {
 	}
 }
 
-func TestGenMobile(t *testing.T) {
+func TestGenerateMobile(t *testing.T) {
 	tests := []struct {
 		name    string
 		country string
@@ -237,15 +256,15 @@ func TestGenMobile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := p.GenMobile(tt.country, tt.limit)
+			got := p.GenerateMobile(tt.limit)
 			if len(got) != tt.limit {
-				t.Errorf("GenMobile() = %v, want %v", len(got), tt.limit)
+				t.Errorf("GenerateMobile() = %v, want %v", len(got), tt.limit)
 			}
 		})
 	}
 }
 
-func TestGenLandline(t *testing.T) {
+func TestGenerateLandline(t *testing.T) {
 	tests := []struct {
 		name    string
 		country string
@@ -277,15 +296,15 @@ func TestGenLandline(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := p.GenLandline(tt.country, tt.limit)
+			got := p.GenerateLandline(tt.limit)
 			if len(got) != tt.limit {
-				t.Errorf("GenLandline() = %v, want %v", len(got), tt.limit)
+				t.Errorf("GenerateLandline() = %v, want %v", len(got), tt.limit)
 			}
 		})
 	}
 }
 
-func TestGenMobileWithMask(t *testing.T) {
+func TestGenerateMobileWithMask(t *testing.T) {
 	tests := []struct {
 		name  string
 		limit int
@@ -312,9 +331,9 @@ func TestGenMobileWithMask(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := p.GenMobileWithMask(tt.limit)
+			got := p.GenerateMobileWithMask(tt.limit)
 			if len(got) != tt.limit {
-				t.Errorf("GenMobileWithMask() = %v, want %v", len(got), tt.limit)
+				t.Errorf("GenerateMobileWithMask() = %v, want %v", len(got), tt.limit)
 			}
 		})
 	}

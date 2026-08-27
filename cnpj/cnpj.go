@@ -5,28 +5,22 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/thiagozs/go-xutils/randutil"
+	"github.com/thiagozs/go-xutils/v2/randutil"
 )
 
-type CNPJ struct{}
-
-func New() *CNPJ {
-	return &CNPJ{}
-}
-
-// GenerateCNPJ generates a random CNPJ
-func (c *CNPJ) Generate() string {
+// Generate returns a valid, unformatted CNPJ.
+func Generate() string {
 	// Generate the first 12 random digits of the CNPJ
 	numbers := make([]int, 12)
 	for i := range numbers {
-		numbers[i] = randutil.Global.Intn(10)
+		numbers[i] = randutil.Default().Intn(10)
 	}
 
 	// Calculate the first check digit
-	numbers = append(numbers, c.calculateCheckDigit(numbers))
+	numbers = append(numbers, calculateCheckDigit(numbers))
 
 	// Calculate the second check digit
-	numbers = append(numbers, c.calculateCheckDigit(numbers))
+	numbers = append(numbers, calculateCheckDigit(numbers))
 
 	// Convert the CNPJ numbers to a string using strings.Builder
 	var b strings.Builder
@@ -36,7 +30,7 @@ func (c *CNPJ) Generate() string {
 	return b.String()
 }
 
-func (c *CNPJ) calculateCheckDigit(numbers []int) int {
+func calculateCheckDigit(numbers []int) int {
 	weights := []int{6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2}
 
 	sum := 0
@@ -51,24 +45,18 @@ func (c *CNPJ) calculateCheckDigit(numbers []int) int {
 	return 11 - remainder
 }
 
-// IsValidCNPJ validates a CNPJ
-func (c *CNPJ) IsValid(cnpj string) bool {
-	cnpj = c.TrimCNPJ(cnpj)
+// IsValid validates formatted or unformatted CNPJ values.
+func IsValid(cnpj string) bool {
+	if !reCNPJInput.MatchString(cnpj) {
+		return false
+	}
+	cnpj = Normalize(cnpj)
 
 	if len(cnpj) != 14 {
 		return false
 	}
 
-	sum := 0
-	for _, digit := range cnpj[:12] {
-		num, err := strconv.Atoi(string(digit))
-		if err != nil {
-			return false
-		}
-		sum += num
-	}
-
-	if sum == 0 {
+	if allDigitsEqual(cnpj) {
 		return false
 	}
 
@@ -82,15 +70,25 @@ func (c *CNPJ) IsValid(cnpj string) bool {
 	}
 
 	// Validate the first and second check digits
-	if c.calculateCheckDigit(numbers[:12]) != numbers[12] {
+	if calculateCheckDigit(numbers[:12]) != numbers[12] {
 		return false
 	}
-	return c.calculateCheckDigit(numbers[:13]) == numbers[13]
+	return calculateCheckDigit(numbers[:13]) == numbers[13]
 }
 
-// TrimCNPJ trims CNPJ
-func (c *CNPJ) TrimCNPJ(cnpj string) string {
-	return reNonDigits.ReplaceAllString(cnpj, "")
+func allDigitsEqual(value string) bool {
+	for i := 1; i < len(value); i++ {
+		if value[i] != value[0] {
+			return false
+		}
+	}
+	return true
 }
 
-var reNonDigits = regexp.MustCompile(`\D`)
+// Normalize removes every non-digit character from a CNPJ.
+func Normalize(value string) string { return reNonDigits.ReplaceAllString(value, "") }
+
+var (
+	reNonDigits = regexp.MustCompile(`\D`)
+	reCNPJInput = regexp.MustCompile(`^(?:\d{14}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})$`)
+)

@@ -1,43 +1,66 @@
 package structs
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"reflect"
 	"strings"
 )
 
-type Structs struct{}
+var ErrExpectedStruct = errors.New("structs: expected a struct or non-nil pointer to struct")
 
-func New() *Structs {
-	return &Structs{}
-}
-
-func (s *Structs) ToQueryParams(i any) string {
-	v := reflect.ValueOf(i)
-	if v.Kind() == reflect.Ptr {
+// EncodeQuery converts exported struct fields to URL query parameters. It
+// honors json names, "-", and omitempty and returns errors for invalid input.
+func EncodeQuery(input any) (string, error) {
+	if input == nil {
+		return "", ErrExpectedStruct
+	}
+	v := reflect.ValueOf(input)
+	if v.Kind() == reflect.Pointer {
+		if v.IsNil() {
+			return "", ErrExpectedStruct
+		}
 		v = v.Elem()
 	}
 
 	if v.Kind() != reflect.Struct {
-		return ""
+		return "", ErrExpectedStruct
 	}
 
 	query := url.Values{}
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
 		fieldType := v.Type().Field(i)
+		if !fieldType.IsExported() {
+			continue
+		}
 		tag := fieldType.Tag.Get("json")
 		name := fieldType.Name
+		options := ""
+		hasJSONName := false
 
-		// Use JSON tag as field name if it's available
 		if tag != "" {
-			name = strings.Split(tag, ",")[0] // Ignore options like omitempty
+			parts := strings.Split(tag, ",")
+			name = parts[0]
+			hasJSONName = name != ""
+			if len(parts) > 1 {
+				options = "," + strings.Join(parts[1:], ",") + ","
+			}
+		}
+		if name == "-" {
+			continue
+		}
+		if name == "" {
+			name = fieldType.Name
 		}
 
 		// Skip zero values for fields with omitempty
-		if strings.Contains(tag, "omitempty") && isEmptyValue(field) {
+		if strings.Contains(options, ",omitempty,") && isEmptyValue(field) {
 			continue
+		}
+		if !hasJSONName {
+			name = strings.ToLower(name)
 		}
 
 		switch field.Kind() {
@@ -46,12 +69,12 @@ func (s *Structs) ToQueryParams(i any) string {
 			for j := 0; j < field.Len(); j++ {
 				sliceValues = append(sliceValues, fmt.Sprintf("%v", field.Index(j)))
 			}
-			query.Add(strings.ToLower(name), strings.Join(sliceValues, ","))
+			query.Add(name, strings.Join(sliceValues, ","))
 		default:
-			query.Add(strings.ToLower(name), fmt.Sprintf("%v", field.Interface()))
+			query.Add(name, fmt.Sprintf("%v", field.Interface()))
 		}
 	}
-	return query.Encode()
+	return query.Encode(), nil
 }
 
 // isEmptyValue checks if a reflect.Value is considered empty
@@ -67,7 +90,7 @@ func isEmptyValue(v reflect.Value) bool {
 		return v.Uint() == 0
 	case reflect.Float32, reflect.Float64:
 		return v.Float() == 0
-	case reflect.Interface, reflect.Ptr:
+	case reflect.Interface, reflect.Pointer:
 		return v.IsNil()
 	}
 	return false

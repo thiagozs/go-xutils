@@ -5,21 +5,15 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/thiagozs/go-xutils/randutil"
+	"github.com/thiagozs/go-xutils/v2/randutil"
 )
 
-type CPF struct{}
-
-func New() *CPF {
-	return &CPF{}
-}
-
-// GenerateCPF generates a valid CPF number
-func (c *CPF) Generate() string {
+// Generate returns a valid, unformatted CPF.
+func Generate() string {
 	// Generate the first 9 random digits of the CPF
 	numbers := make([]int, 9)
 	for i := range numbers {
-		numbers[i] = randutil.Global.Intn(10)
+		numbers[i] = randutil.Default().Intn(10)
 	}
 
 	// Calculate the first check digit
@@ -36,8 +30,12 @@ func (c *CPF) Generate() string {
 	return b.String()
 }
 
-// IsValidCPF validates if the provided CPF is valid
-func (c *CPF) IsValid(cpf string) bool {
+// IsValid validates formatted or unformatted CPF values.
+func IsValid(cpf string) bool {
+	if !reCPFInput.MatchString(cpf) {
+		return false
+	}
+	cpf = Normalize(cpf)
 	if len(cpf) != 11 {
 		return false
 	}
@@ -84,9 +82,10 @@ func calculateCheckDigit(numbers []int, length int) int {
 	return 11 - remainder
 }
 
-// TrimCPF trims CPF
-func (c *CPF) TrimCPF(cpf string) string {
-	return reNonDigits.ReplaceAllString(cpf, "")
-}
+// Normalize removes every non-digit character from a CPF.
+func Normalize(value string) string { return reNonDigits.ReplaceAllString(value, "") }
 
-var reNonDigits = regexp.MustCompile(`\D`)
+var (
+	reNonDigits = regexp.MustCompile(`\D`)
+	reCPFInput  = regexp.MustCompile(`^(?:\d{11}|\d{3}\.\d{3}\.\d{3}-\d{2})$`)
+)

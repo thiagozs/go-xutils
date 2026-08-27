@@ -29,23 +29,17 @@ var (
 	)
 )
 
-type Hash struct{}
-
-func New() *Hash {
-	return &Hash{}
-}
-
-func (h *Hash) MD5(str string) string {
+// MD5 returns the hexadecimal MD5 checksum. It must not be used for passwords
+// or cryptographic integrity; it exists for legacy checksum interoperability.
+func MD5(str string) string {
 	s := cmd5.New()
 	_, _ = s.Write([]byte(str))
 	return hex.EncodeToString(s.Sum(nil))
 }
 
-func (h *Hash) IsMD5(v string) bool {
-	return len(v) == 32 && h.IsHex(v)
-}
+func IsMD5(v string) bool { return len(v) == 32 && IsHex(v) }
 
-func (h *Hash) IsBase64(v string) bool {
+func IsBase64(v string) bool {
 	if len(v) == 0 {
 		return false
 	}
@@ -53,7 +47,7 @@ func (h *Hash) IsBase64(v string) bool {
 	return base64Regex.MatchString(v)
 }
 
-func (h *Hash) IsBase64URL(v string) bool {
+func IsBase64URL(v string) bool {
 	if len(v) == 0 {
 		return false
 	}
@@ -61,18 +55,10 @@ func (h *Hash) IsBase64URL(v string) bool {
 	return base64URLRegex.MatchString(v)
 }
 
-func (h *Hash) IsHex(v string) bool {
-	return hexRegex.MatchString(v)
-}
+func IsHex(v string) bool { return hexRegex.MatchString(v) }
 
-func (h *Hash) IsBin(v string) bool {
-	return binRegex.MatchString(v)
-}
+func IsBin(v string) bool { return binRegex.MatchString(v) }
 
-func (h *Hash) IsHexColor(v string) bool {
-	return hexColorRegex.MatchString(v)
-}
+func IsHexColor(v string) bool { return hexColorRegex.MatchString(v) }
 
-func (h *Hash) IsRGBColor(v string) bool {
-	return rgbColorRegex.MatchString(v)
-}
+func IsRGBColor(v string) bool { return rgbColorRegex.MatchString(v) }

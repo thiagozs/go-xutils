@@ -33,13 +33,14 @@ func TestIsValidEmail(t *testing.T) {
 			email:    "test123@example.co.in",
 			expected: true,
 		},
+		{name: "Invalid consecutive local dots", email: "a..b@example.com", expected: false},
+		{name: "Invalid consecutive domain dots", email: "a@example..com", expected: false},
+		{name: "Invalid leading domain hyphen", email: "a@-example.com", expected: false},
 	}
-
-	e := &Email{}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := e.IsValid(tt.email)
+			actual := IsValid(tt.email)
 			if actual != tt.expected {
 				t.Errorf("expected: %v, actual: %v", tt.expected, actual)
 			}

@@ -1,6 +1,7 @@
 package files
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -29,6 +30,27 @@ func TestSaveFile(t *testing.T) {
 
 	if string(readData) != string(data) {
 		t.Errorf("Expected file content: %s, got: %s", data, readData)
+	}
+}
+
+func TestConfiguredModes(t *testing.T) {
+	fm := New()
+	fm.FileMode = 0600
+	fm.DirMode = 0700
+	dir := filepath.Join(t.TempDir(), "private")
+	if err := fm.CreateDir(dir); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "data")
+	if err := fm.SaveFile(path, []byte("secret")); err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := info.Mode().Perm(); got != 0600 {
+		t.Fatalf("file mode = %o, want 600", got)
 	}
 }
 
@@ -296,6 +318,23 @@ func TestRemoveDir(t *testing.T) {
 	}
 }
 
+func TestRemoveDirDoesNotRecursivelyDelete(t *testing.T) {
+	fm := New()
+	dir := filepath.Join(t.TempDir(), "non-empty")
+	if err := os.Mkdir(dir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "keep.txt"), []byte("keep"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := fm.RemoveDir(dir); err == nil {
+		t.Fatal("expected non-empty directory removal to fail")
+	}
+	if !fm.IsFile(filepath.Join(dir, "keep.txt")) {
+		t.Fatal("RemoveDir unexpectedly deleted nested content")
+	}
+}
+
 func TestCreateDir(t *testing.T) {
 	fm := New()
 	testDir, err := os.MkdirTemp("", "testCreateDir")
@@ -380,6 +419,49 @@ func TestCopyDir(t *testing.T) {
 
 	if string(dstData) != "nested data" {
 		t.Errorf("Copied data does not match: %s", dstData)
+	}
+}
+
+func TestCopyDirPreservesTreeAndRejectsRecursiveDestination(t *testing.T) {
+	fm := New()
+	testDir := t.TempDir()
+	srcDir := filepath.Join(testDir, "src")
+	dstDir := filepath.Join(testDir, "dst")
+	if err := os.MkdirAll(filepath.Join(srcDir, "nested"), 0750); err != nil {
+		t.Fatal(err)
+	}
+	sourceFile := filepath.Join(srcDir, "nested", "data.txt")
+	if err := os.WriteFile(sourceFile, []byte("data"), 0640); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(dstDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := fm.CopyDir(srcDir, dstDir); err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(filepath.Join(dstDir, "nested", "data.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := info.Mode().Perm(); got != 0640 {
+		t.Fatalf("copied mode = %o, want 640", got)
+	}
+
+	linkPath := filepath.Join(srcDir, "data-link")
+	if err := os.Symlink(filepath.Join("nested", "data.txt"), linkPath); err != nil {
+		t.Fatal(err)
+	}
+	dstWithLink := filepath.Join(testDir, "dst-link")
+	if err := fm.CopyDir(srcDir, dstWithLink); err != nil {
+		t.Fatal(err)
+	}
+	if info, err := os.Lstat(filepath.Join(dstWithLink, "data-link")); err != nil || info.Mode()&os.ModeSymlink == 0 {
+		t.Fatalf("symlink was not preserved: info=%v err=%v", info, err)
+	}
+
+	if err := fm.CopyDir(srcDir, filepath.Join(srcDir, "recursive")); !errors.Is(err, ErrDestinationInsideSource) {
+		t.Fatalf("expected ErrDestinationInsideSource, got %v", err)
 	}
 }
 
@@ -473,6 +555,9 @@ func TestReadDir(t *testing.T) {
 	if err := os.Mkdir(nestedDir, 0755); err != nil {
 		t.Fatalf("Failed to create nested dir: %v", err)
 	}
+	if err := os.WriteFile(filepath.Join(nestedDir, "nested.txt"), []byte("nested"), 0644); err != nil {
+		t.Fatal(err)
+	}
 	file1 := filepath.Join(testDir, "file1.txt")
 	if err := os.WriteFile(file1, []byte("content"), 0644); err != nil {
 		t.Fatalf("Failed to write file1: %v", err)
@@ -491,6 +576,14 @@ func TestReadDir(t *testing.T) {
 
 	if files[0].Name() != "file1.txt" {
 		t.Errorf("Expected file1.txt to be found, but found %s", files[0].Name())
+	}
+
+	walked, err := WalkFiles(testDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(walked) != 2 {
+		t.Fatalf("WalkFiles() returned %d files, want 2", len(walked))
 	}
 }
 
@@ -727,7 +820,7 @@ func TestReadFileLinesDelimiter(t *testing.T) {
 		t.Fatalf("Failed to write test file: %v", err)
 	}
 
-	lines, err := fm.ReadFileLines(testFile, SLASH_N)
+	lines, err := fm.ReadFileLines(testFile, DelimiterLF)
 	if err != nil {
 		t.Fatalf("Failed to read file lines: %v", err)
 	}

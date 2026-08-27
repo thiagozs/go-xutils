@@ -1,68 +1,78 @@
+# go-xutils v2
 
-# XUtils - A Comprehensive Golang Toolkit for Developers
+Biblioteca Go com pacotes focados para validação, transformação de dados,
+arquivos e criptografia.
 
-## Introduction
+Requer Go 1.26.6 ou superior.
 
-XUtils embodies a versatile collection of Golang tools crafted to streamline and enhance your development workflow. This toolkit is meticulously organized into specialized directories, each serving a distinct aspect of development needs, from data encryption and geographical computations to string manipulations and beyond.
+> A v2 possui mudanças incompatíveis. Consulte [MIGRATION_V2.md](MIGRATION_V2.md)
+> antes de atualizar uma aplicação v1.
 
-### Toolkit Components:
+## Instalação
 
-- **aes**: Home to scripts for implementing the Advanced Encryption Standard (AES), this directory provides robust solutions for encrypting and securing your data, ensuring privacy and protection in your applications.
+```bash
+go get github.com/thiagozs/go-xutils/v2@v2.0.0-rc.1
+```
 
-- **bools**: Contains utilities that extend the capabilities of boolean logic operations, offering advanced tools for intricate logical expressions and boolean algebra, crucial for decision-making logic in software development.
+Importe apenas o pacote necessário:
 
-- **calc**: This segment offers a suite of calculators and mathematical tools, enabling complex calculations and numerical analysis, indispensable for applications requiring mathematical computations.
+```go
+import (
+    "github.com/thiagozs/go-xutils/v2/email"
+    "github.com/thiagozs/go-xutils/v2/ip"
+)
 
-- **cep**: Dedicated to handling CEP (Postal Addressing Code in Brazil), this directory includes constants, validation, and parsing tools specifically designed for Brazilian postal codes, enhancing localization and geographic targeting.
+validEmail := email.IsValid("dev@example.com")
+validIP := ip.IsValid("2001:db8::1")
+```
 
-- **cnpj**: Focuses on the validation and generation of CNPJ numbers, catering to Brazilian business entities' needs. These tools are essential for applications that require integration with Brazilian corporate registries.
+Utilitários sem estado são funções de pacote, como `cpf.IsValid`,
+`cnpj.Normalize`, `cep.Format`, `strings.CamelCase` e `geo.IsLatitude`.
+Transformações de `slices` não alteram a entrada. Estado configurável fica em
+tipos explícitos, como `strings.Generator`, `csv.Parser` e `files.Files`.
 
-- **convs**: A hub for conversion utilities, facilitating seamless transitions between various data types and units, thereby simplifying data manipulation and enhancing interoperability across different systems.
+## Criptografia
 
-- **cpf**: Similar to the `cnpj` directory but tailored for individuals, offering scripts for CPF number validation and generation, crucial for applications processing Brazilian individual taxpayer information.
+AES utiliza GCM autenticado. O nonce aleatório é incluído no valor codificado:
 
-- **csv**: Specializes in processing Comma-Separated Values (CSV) files, equipped with readers, writers, and sample data, making it an invaluable resource for data import/export and analysis tasks.
+```go
+key := []byte("0123456789abcdef0123456789abcdef")
+cipher, err := aes.NewCipher(key)
+encoded, err := cipher.Encrypt([]byte("segredo"))
+plaintext, err := cipher.Decrypt(encoded)
+```
 
-- **email**: Provides libraries for comprehensive email handling, including sending, receiving, and validating email addresses, essential for communication and notification systems within applications.
+RSA utiliza OAEP com SHA-256. AES-CBC e RSA PKCS#1 v1.5 não fazem parte da v2.
 
-- **examples**: This folder is a treasure trove of example scripts and code snippets, demonstrating the practical application of the XUtils toolkit, serving as a valuable resource for developers.
+## Pacotes
 
-- **files**: Contains utilities for file operations, such as reading, writing, and searching, addressing common file manipulation tasks in software projects.
+- Documentos e validação: `cep`, `cnpj`, `cpf`, `email`, `geo`, `ip`, `phone`.
+- Transformação: `bools`, `calc`, `convs`, `slices`, `strings`, `structs`.
+- Entrada e saída: `csv`, `files`, `xls`.
+- Criptografia e codificação: `aes`, `hash`, `rsa`.
 
-- **geo**: Offers tools for geographical data processing, including location validation and coordinates conversion, vital for mapping, navigation, and location-based services.
+## Exemplos
 
-- **hash**: Equipped with functions for generating and verifying hash values, this directory is crucial for ensuring data integrity, secure password storage, and cryptographic operations.
+Há um programa executável para cada pacote em [examples](examples/README.md).
+Por exemplo:
 
-- **ip**: This collection of utilities is designed for IP address management, including validation and network calculations, fundamental for networking and cybersecurity applications.
+```bash
+go run ./examples/cpf
+go run ./examples/files
+go run ./examples/rsa
+```
 
-- **phone**: Focuses on phone number processing, providing formatting and validation tools, essential for applications that require standardizing and validating international phone numbers.
+## Qualidade
 
-- **rsa**: Contains RSA cryptographic code, facilitating secure data encryption and decryption using the RSA algorithm, key for secure communications and data protection.
+```bash
+go test ./...
+go test -race ./...
+go vet ./...
+golangci-lint run ./...
+go run golang.org/x/vuln/cmd/govulncheck@v1.7.0 ./...
+```
 
-- **slices**: Offers utilities for manipulating Go slices, enhancing the ease and efficiency of working with this fundamental data structure in Go programming.
+Consulte [ARCHITECTURE.md](ARCHITECTURE.md) para as regras de design e
+[CHANGELOG.md](CHANGELOG.md) para as mudanças da versão.
 
-- **strings**: This directory is rich in functions for string manipulation, enabling sophisticated text processing, parsing, and formatting, crucial for text-heavy applications and data processing tasks.
-
-- **structs**: Provides definitions and utilities for working with Go structs, aiding in the organization and manipulation of complex data types, enhancing code clarity and efficiency.
-
-- **xls**: Specializes in Excel spreadsheet processing, with tools for reading, writing, and manipulating `.xls` and `.xlsx` files, key for applications that interact with spreadsheet data.
-
-### Project Structure
-
-The project is structured with clarity and precision, ensuring each component is easily accessible and well-documented. The inclusion of test files (`*_test.go`) alongside each utility underscores the toolkit's reliability and readiness for production use.
-
-[Project directory structure omitted for brevity]
-
-## Commitment to Quality
-
-Adhering to Semantic Versioning, XUtils ensures backward compatibility and clear communication through its versioning scheme. The project's dedication to quality and reliability is evident in its comprehensive documentation and structured testing approach.
-
-For detailed insights into our licensing terms and to explore the wealth of functionalities offered by XUtils, please refer to the LICENSE file and delve into the repository's extensive documentation.
-
-Empower your development with XUtils - where efficiency meets innovation.
-
-## Versioning and License
-
-Our version numbers adhere to the Semantic Versioning specification. You can explore the available versions by checking the tags on this repository. For more details about our license model, please refer to the LICENSE file.
-
-© 2023, thiagozs.
+Licença MIT.

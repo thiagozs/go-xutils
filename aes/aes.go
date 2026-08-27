@@ -1,73 +1,59 @@
 package aes
 
 import (
-	"bytes"
 	caes "crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
 	"encoding/base64"
+	"errors"
+	"fmt"
+	"io"
 )
 
-type AES struct{}
+var ErrInvalidCiphertext = errors.New("aes: invalid ciphertext")
 
-func New() *AES {
-	return &AES{}
+// Cipher provides authenticated AES-GCM encryption. It is safe for concurrent
+// use and should be preferred over the legacy CBC API.
+type Cipher struct {
+	aead cipher.AEAD
 }
 
-type AESki struct {
-	key string
-	iv  string
-}
-
-func (a *AES) RegisterKeys(key, iv string) *AESki {
-	return &AESki{
-		key: key,
-		iv:  iv,
-	}
-}
-
-func (a *AESki) Encrypt(encryptStr string) (string, error) {
-	encryptBytes := []byte(encryptStr)
-	block, err := caes.NewCipher([]byte(a.key))
+// NewCipher builds an authenticated cipher from a 16, 24, or 32-byte key.
+func NewCipher(key []byte) (*Cipher, error) {
+	block, err := caes.NewCipher(key)
 	if err != nil {
-		return "", err
+		return nil, fmt.Errorf("aes: create cipher: %w", err)
 	}
-
-	blockSize := block.BlockSize()
-	encryptBytes = pkcs5Padding(encryptBytes, blockSize)
-
-	blockMode := cipher.NewCBCEncrypter(block, []byte(a.iv))
-	encrypted := make([]byte, len(encryptBytes))
-	blockMode.CryptBlocks(encrypted, encryptBytes)
-	return base64.URLEncoding.EncodeToString(encrypted), nil
-}
-
-func (a *AESki) Decrypt(decryptStr string) (string, error) {
-	decryptBytes, err := base64.URLEncoding.DecodeString(decryptStr)
+	aead, err := cipher.NewGCM(block)
 	if err != nil {
-		return "", err
+		return nil, fmt.Errorf("aes: create GCM: %w", err)
 	}
+	return &Cipher{aead: aead}, nil
+}
 
-	block, err := caes.NewCipher([]byte(a.key))
+// Encrypt returns base64url(nonce || ciphertext || authentication-tag).
+func (c *Cipher) Encrypt(plaintext []byte) (string, error) {
+	nonce := make([]byte, c.aead.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", fmt.Errorf("aes: generate nonce: %w", err)
+	}
+	sealed := c.aead.Seal(nonce, nonce, plaintext, nil)
+	return base64.RawURLEncoding.EncodeToString(sealed), nil
+}
+
+// Decrypt authenticates and decrypts data produced by Encrypt.
+func (c *Cipher) Decrypt(encoded string) ([]byte, error) {
+	data, err := base64.RawURLEncoding.DecodeString(encoded)
 	if err != nil {
-		return "", err
+		return nil, fmt.Errorf("aes: decode ciphertext: %w", err)
 	}
-
-	blockMode := cipher.NewCBCDecrypter(block, []byte(a.iv))
-	decrypted := make([]byte, len(decryptBytes))
-
-	blockMode.CryptBlocks(decrypted, decryptBytes)
-	decrypted = pkcs5UnPadding(decrypted)
-	return string(decrypted), nil
-}
-
-func pkcs5Padding(cipherText []byte, blockSize int) []byte {
-	padding := blockSize - len(cipherText)%blockSize
-	padText := bytes.Repeat([]byte{byte(padding)}, padding)
-	return append(cipherText, padText...)
-}
-
-func pkcs5UnPadding(decrypted []byte) []byte {
-	length := len(decrypted)
-	unPadding := int(decrypted[length-1])
-	return decrypted[:(length - unPadding)]
+	nonceSize := c.aead.NonceSize()
+	if len(data) < nonceSize+c.aead.Overhead() {
+		return nil, ErrInvalidCiphertext
+	}
+	plaintext, err := c.aead.Open(nil, data[:nonceSize], data[nonceSize:], nil)
+	if err != nil {
+		return nil, fmt.Errorf("aes: authenticate ciphertext: %w", err)
+	}
+	return plaintext, nil
 }

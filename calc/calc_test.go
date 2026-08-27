@@ -1,19 +1,19 @@
 package calc
 
 import (
+	"errors"
+	"math"
 	"testing"
 )
 
 func TestCalc(t *testing.T) {
-	c := New()
-
 	t.Run("Calculate Limit and Offset with Strings", func(t *testing.T) {
 		pageNumberStr := "2"
 		pageSizeStr := "10"
 		expectedLimit := int32(10)
 		expectedOffset := int32(10)
 
-		limit, offset, err := c.CalculateLimitAndOffsetStr(pageNumberStr, pageSizeStr)
+		limit, offset, err := LimitOffsetString(pageNumberStr, pageSizeStr)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -29,7 +29,7 @@ func TestCalc(t *testing.T) {
 		expectedLimit := int32(20)
 		expectedOffset := int32(40)
 
-		limit, offset, err := c.CalculateLimitAndOffset(pageNumber, pageSize)
+		limit, offset, err := LimitOffset(pageNumber, pageSize)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -43,7 +43,7 @@ func TestCalc(t *testing.T) {
 		pageNumberStr := "invalid"
 		pageSizeStr := "10"
 
-		_, _, err := c.CalculateLimitAndOffsetStr(pageNumberStr, pageSizeStr)
+		_, _, err := LimitOffsetString(pageNumberStr, pageSizeStr)
 		if err == nil {
 			t.Errorf("expected error, but got nil")
 		}
@@ -53,7 +53,7 @@ func TestCalc(t *testing.T) {
 		pageNumberStr := "-1"
 		pageSizeStr := "10"
 
-		_, _, err := c.CalculateLimitAndOffsetStr(pageNumberStr, pageSizeStr)
+		_, _, err := LimitOffsetString(pageNumberStr, pageSizeStr)
 		if err == nil {
 			t.Errorf("expected error, but got nil")
 		}
@@ -63,7 +63,7 @@ func TestCalc(t *testing.T) {
 		pageNumberStr := "1"
 		pageSizeStr := "-10"
 
-		_, _, err := c.CalculateLimitAndOffsetStr(pageNumberStr, pageSizeStr)
+		_, _, err := LimitOffsetString(pageNumberStr, pageSizeStr)
 		if err == nil {
 			t.Errorf("expected error, but got nil")
 		}
@@ -73,7 +73,7 @@ func TestCalc(t *testing.T) {
 		pageNumberStr := "0"
 		pageSizeStr := "10"
 
-		_, _, err := c.CalculateLimitAndOffsetStr(pageNumberStr, pageSizeStr)
+		_, _, err := LimitOffsetString(pageNumberStr, pageSizeStr)
 		if err == nil {
 			t.Errorf("expected error, but got nil")
 		}
@@ -83,7 +83,7 @@ func TestCalc(t *testing.T) {
 		pageNumberStr := "1"
 		pageSizeStr := "0"
 
-		_, _, err := c.CalculateLimitAndOffsetStr(pageNumberStr, pageSizeStr)
+		_, _, err := LimitOffsetString(pageNumberStr, pageSizeStr)
 		if err == nil {
 			t.Errorf("expected error, but got nil")
 		}
@@ -93,7 +93,7 @@ func TestCalc(t *testing.T) {
 		pageNumber := int32(-1)
 		pageSize := int32(10)
 
-		_, _, err := c.CalculateLimitAndOffset(pageNumber, pageSize)
+		_, _, err := LimitOffset(pageNumber, pageSize)
 		if err == nil {
 			t.Errorf("expected error, but got nil")
 		}
@@ -103,7 +103,7 @@ func TestCalc(t *testing.T) {
 		pageNumber := int32(0)
 		pageSize := int32(10)
 
-		_, _, err := c.CalculateLimitAndOffset(pageNumber, pageSize)
+		_, _, err := LimitOffset(pageNumber, pageSize)
 		if err == nil {
 			t.Errorf("expected error, but got nil")
 		}
@@ -113,7 +113,7 @@ func TestCalc(t *testing.T) {
 		pageNumber := int32(-1)
 		pageSize := int32(10)
 
-		_, _, err := c.CalculateLimitAndOffset(pageNumber, pageSize)
+		_, _, err := LimitOffset(pageNumber, pageSize)
 		if err == nil {
 			t.Errorf("expected error, but got nil")
 		}
@@ -125,7 +125,7 @@ func TestCalc(t *testing.T) {
 		min := int32(10)
 		max := int32(20)
 
-		random, err := c.RandomInRangeStr(minStr, maxStr)
+		random, err := RandomInt32String(minStr, maxStr)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -139,7 +139,7 @@ func TestCalc(t *testing.T) {
 		min := int32(10)
 		max := int32(20)
 
-		random, err := c.RandomInRange(min, max)
+		random, err := RandomInt32(min, max)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -149,4 +149,23 @@ func TestCalc(t *testing.T) {
 		}
 	})
 
+}
+
+func TestBoundaries(t *testing.T) {
+	got, err := RandomInt32(math.MinInt32, math.MaxInt32)
+	if err != nil {
+		t.Fatalf("full int32 range failed: value=%d err=%v", got, err)
+	}
+
+	_, _, err = LimitOffset(math.MaxInt32, 2)
+	if !errors.Is(err, ErrOverflow) {
+		t.Fatalf("expected ErrOverflow, got %v", err)
+	}
+
+	if _, _, err := LimitOffsetString("2147483648", "1"); err == nil {
+		t.Fatal("expected int32 overflow to be rejected")
+	}
+	if _, _, err := LimitOffsetString("-2147483649", "1"); err == nil {
+		t.Fatal("expected int32 underflow to be rejected")
+	}
 }

@@ -1,13 +1,23 @@
+version: "2"
+
 run:
   timeout: 3m
 
 linters:
+  default: standard
+  exclusions:
+    paths:
+      - ^tmp/
+    rules:
+      - path: _test\.go
+        linters:
+          - errcheck
+
+formatters:
   enable:
-    - govet
     - gofmt
     - goimports
-    - ineffassign
-    - staticcheck
-    - unused
 
-
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

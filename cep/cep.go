@@ -2,73 +2,63 @@ package cep
 
 import (
 	"encoding/csv"
+	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 
-	"github.com/thiagozs/go-xutils/convs"
-	"github.com/thiagozs/go-xutils/randutil"
+	"github.com/thiagozs/go-xutils/v2/randutil"
 )
 
-type CEP struct {
-	conv *convs.Convs
-}
+// Trim removes the conventional CEP separator.
+func Trim(value string) string { return strings.ReplaceAll(value, "-", "") }
 
-func New() *CEP {
-	return &CEP{
-		conv: convs.New(),
+// IsValid reports whether value contains exactly eight CEP digits, optionally
+// separated by a hyphen.
+func IsValid(value string) bool { return reCEPInput.MatchString(value) }
+
+// Format inserts the conventional separator without panicking on short input.
+func Format(value string) string {
+	value = Trim(value)
+	if len(value) <= 5 {
+		return value
 	}
+	return value[:5] + "-" + value[5:]
 }
 
-// Trim trims a CEP
-func (c *CEP) Trim(cep string) string {
-	return strings.Replace(cep, "-", "", -1)
-}
-
-// IsValid checks if a CEP is valid
-func (c *CEP) IsValid(cep string) bool {
-	cep = c.Trim(cep)
-	return reCEP.MatchString(cep)
-}
-
-// Format formats a CEP
-func (c *CEP) Format(cep string) string {
-	cep = c.Trim(cep)
-	return cep[:5] + "-" + cep[5:]
-}
-
-// Generate generates a random CEP
-func (c *CEP) Generate() string {
+// Generate returns a valid CEP from the embedded Brazilian ranges.
+func Generate() string {
 	rec, err := loadCepRecords()
 	if err != nil || len(rec) == 0 {
 		return ""
 	}
 
-	cepRand := rec[randutil.Global.Intn(len(rec))]
+	cepRand := rec[randutil.Default().Intn(len(rec))]
 
 	randomInRange := func(start, end int) int {
 		if start >= end {
 			return start
 		}
-		return start + randutil.Global.Intn(end-start+1)
+		return start + randutil.Default().Intn(end-start+1)
 	}
 
-	cep1, _ := c.conv.ToInt(cepRand[2])
-
-	cep2, _ := c.conv.ToInt(cepRand[3])
+	cep1, err := strconv.Atoi(cepRand[2])
+	if err != nil {
+		return ""
+	}
+	cep2, err := strconv.Atoi(cepRand[3])
+	if err != nil {
+		return ""
+	}
 
 	cepRandNum := randomInRange(cep1, cep2)
 
-	result, _ := c.conv.ToString(cepRandNum)
-
-	return result
+	return fmt.Sprintf("%08d", cepRandNum)
 }
 
-// Normalize normalizes a CEP
-func (c *CEP) Normalize(cep string) string {
-	cep = c.Trim(cep)
-	return reNonDigits.ReplaceAllString(cep, "")
-}
+// Normalize removes every non-digit character from a CEP.
+func Normalize(value string) string { return reNonDigits.ReplaceAllString(value, "") }
 
 var (
 	cepRecords [][]string
@@ -79,12 +69,24 @@ var (
 func loadCepRecords() ([][]string, error) {
 	cepOnce.Do(func() {
 		r := csv.NewReader(strings.NewReader(cepsrangecsv))
-		cepRecords, cepLoadErr = r.ReadAll()
+		records, err := r.ReadAll()
+		if err != nil {
+			cepLoadErr = err
+			return
+		}
+		cepRecords = make([][]string, 0, len(records))
+		for _, record := range records {
+			if len(record) < 4 || !reCEP.MatchString(record[2]) || !reCEP.MatchString(record[3]) {
+				continue
+			}
+			cepRecords = append(cepRecords, record)
+		}
 	})
 	return cepRecords, cepLoadErr
 }
 
 var (
 	reCEP       = regexp.MustCompile(`^\d{8}$`)
+	reCEPInput  = regexp.MustCompile(`^(?:\d{8}|\d{5}-\d{3})$`)
 	reNonDigits = regexp.MustCompile(`\D`)
 )

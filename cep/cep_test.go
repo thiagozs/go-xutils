@@ -9,15 +9,6 @@ import (
 
 type CepTestSuite struct {
 	suite.Suite
-	cep *CEP
-}
-
-func (s *CepTestSuite) SetupTest() {
-	s.cep = New()
-}
-
-func (s *CepTestSuite) TearDownTest() {
-	s.cep = nil
 }
 
 func (s *CepTestSuite) IsValidTest() {
@@ -38,7 +29,7 @@ func (s *CepTestSuite) IsValidTest() {
 	}
 
 	for _, c := range cases {
-		result := s.cep.IsValid(c.cep)
+		result := IsValid(c.cep)
 		assert.Equal(s.T(), c.expected, result)
 	}
 }
@@ -60,7 +51,7 @@ func (s *CepTestSuite) TrimCepTest() {
 	}
 
 	for _, c := range cases {
-		result := s.cep.Trim(c.cep)
+		result := Trim(c.cep)
 		assert.Equal(s.T(), c.expected, result)
 	}
 }
@@ -82,13 +73,13 @@ func (s *CepTestSuite) FormatCepTest() {
 	}
 
 	for _, c := range cases {
-		result := s.cep.Format(c.cep)
+		result := Format(c.cep)
 		assert.Equal(s.T(), c.expected, result)
 	}
 }
 
 func (s *CepTestSuite) GenerateCepTest() {
-	result := s.cep.IsValid(s.cep.Generate())
+	result := IsValid(Generate())
 	assert.True(s.T(), result)
 }
 
@@ -109,11 +100,43 @@ func (s *CepTestSuite) NormalizeCepTest() {
 	}
 
 	for _, c := range cases {
-		result := s.cep.Normalize(c.cep)
+		result := Normalize(c.cep)
 		assert.Equal(s.T(), c.expected, result)
 	}
 }
 
 func TestCepTestSuite(t *testing.T) {
 	suite.Run(t, new(CepTestSuite))
+}
+
+func TestFormatShortInputDoesNotPanic(t *testing.T) {
+	if got := Format("123"); got != "123" {
+		t.Fatalf("Format short input = %q", got)
+	}
+}
+
+func TestEmbeddedRangesAndPackageAPI(t *testing.T) {
+	records, err := loadCepRecords()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(records) == 0 {
+		t.Fatal("expected valid embedded CEP ranges")
+	}
+	for _, record := range records {
+		if len(record) < 4 || !reCEP.MatchString(record[2]) || !reCEP.MatchString(record[3]) {
+			t.Fatalf("invalid embedded record: %#v", record)
+		}
+	}
+	for i := 0; i < 1000; i++ {
+		if value := Generate(); !IsValid(value) {
+			t.Fatalf("Generate() returned invalid CEP %q", value)
+		}
+	}
+	if got := Format("01000000"); got != "01000-000" {
+		t.Fatalf("Format() = %q", got)
+	}
+	if IsValid("01-000-000") {
+		t.Fatal("misplaced CEP separators must be invalid")
+	}
 }
